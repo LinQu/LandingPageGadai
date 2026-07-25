@@ -1014,6 +1014,14 @@ export const testimonials: Testimonial[] = [
     rating: 5,
     image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150',
   },
+  {
+    id: '5',
+    name: 'Rachmat Fajar',
+    role: 'Entrepreneur',
+    content: 'Gadai Sakti membantu saya mendapatkan dana cepat untuk modal usaha. Prosesnya mudah dan cepat, serta stafnya sangat ramah dan profesional.',
+    rating: 4 ,
+    image: 'https://images.unsplash.com/photo-1520813792240-56fc4a3765a7?w=150',
+  }
 ]
 
 // Archive (sample booking history)

@@ -11,8 +11,6 @@ export function CategoriesSection() {
     { icon: '🚁', name: 'Drone', emoji: true },
     { icon: '🏍️', name: 'Motor', emoji: true },
     { icon: '📺', name: 'TV/Monitor', emoji: true },
-    { icon: '⌚', name: 'Jam Tangan', emoji: true },
-    { icon: '💎', name: 'Perhiasan', emoji: true },
   ]
 
   return (

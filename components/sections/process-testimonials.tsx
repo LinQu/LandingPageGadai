@@ -2,8 +2,9 @@
 
 import { motion } from 'framer-motion'
 import { getTestimonials, getAverageRating } from '@/lib/services/misc.service'
-import { useEffect, useState } from 'react'
-import { Star } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { ChevronLeft, ChevronRight, Star } from 'lucide-react'
+import type { Testimonial } from '@/lib/types'
 
 export function ProcessSection() {
   const steps = [
@@ -92,9 +93,23 @@ export function ProcessSection() {
 }
 
 export function TestimonialsSection() {
-  const [testimonials, setTestimonials] = useState<any[]>([])
+  const carouselRef = useRef<HTMLDivElement>(null)
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([])
   const [averageRating, setAverageRating] = useState(0)
   const [loading, setLoading] = useState(true)
+
+  const scrollTestimonials = (direction: 'left' | 'right') => {
+    const carousel = carouselRef.current
+
+    if (!carousel) {
+      return
+    }
+
+    carousel.scrollBy({
+      left: direction === 'left' ? -carousel.clientWidth : carousel.clientWidth,
+      behavior: 'smooth',
+    })
+  }
 
   useEffect(() => {
     async function loadTestimonials() {
@@ -123,7 +138,7 @@ export function TestimonialsSection() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-10"
         >
           <span className="inline-block px-4 py-2 bg-accent/10 text-accent text-sm font-semibold rounded-full mb-4">
             ⭐ TESTIMONI
@@ -143,15 +158,37 @@ export function TestimonialsSection() {
           <p className="text-lg text-text-muted">Rata-rata {averageRating.toFixed(1)} / 5 dari {testimonials.length} pelanggan</p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="mb-6 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => scrollTestimonials('left')}
+            aria-label="Testimoni sebelumnya"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-white text-primary transition-colors hover:border-primary hover:bg-primary/5"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollTestimonials('right')}
+            aria-label="Testimoni berikutnya"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white transition-colors hover:bg-primary-dark"
+          >
+            <ChevronRight size={20} />
+          </button>
+        </div>
+
+        <div
+          ref={carouselRef}
+          className="flex snap-x snap-mandatory gap-6 overflow-x-auto scroll-smooth pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
           {testimonials.map((testimonial, idx) => (
             <motion.div
-              key={idx}
+              key={testimonial.id}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: idx * 0.1 }}
-              className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              transition={{ delay: idx * 0.08 }}
+              className="min-h-full flex-none basis-full snap-start rounded-xl bg-white p-6 shadow-sm transition-shadow hover:shadow-md sm:basis-[calc(50%-12px)] lg:basis-[calc(25%-18px)]"
             >
               <div className="flex gap-1 mb-4">
                 {[...Array(testimonial.rating)].map((_, i) => (

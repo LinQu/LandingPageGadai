@@ -46,7 +46,7 @@ export function BookingForm() {
           name: simulation?.branch?.NamaCabang || '',
         },
         itemDetails: simulation as SimulationData,
-        totalValuation: simulation?.valuation || 0,
+        totalValuation: receivedLoanAmount,
       })
 
       localStorage.setItem('bookingData', JSON.stringify(booking))
@@ -67,6 +67,11 @@ export function BookingForm() {
     return <div className="text-center text-text-muted">Data tidak ditemukan</div>
   }
 
+  const selectedEstimate = simulation.loanAmount || simulation.valuation || simulation.valuationMax || 0
+  const sewaModal = simulation.sewaModal || 0
+  const adminFee = simulation.adminFee || 0
+  const receivedLoanAmount = Math.max(selectedEstimate - sewaModal - adminFee, 0)
+
   return (
     <motion.form
       onSubmit={handleSubmit}
@@ -82,25 +87,37 @@ export function BookingForm() {
             ? `${simulation.itemName}${simulation.specification ? ` ${simulation.specification}` : ''}`
             : `${simulation.brand?.name} ${simulation.series?.name} ${simulation.variant?.name}`}
         </div>
-        <div className="flex justify-between items-center">
-          <span className="text-text-muted">Taksiran:</span>
-          <span className="text-xl font-bold text-accent">
-            {formatCurrency(simulation.valuation || simulation.valuationMax || 0)}
-          </span>
-        </div>
         {simulation.valuationMin && simulation.valuationMax ? (
-          <div className="flex justify-between items-center text-sm text-text-muted mt-2">
-            <span>Estimasi cair:</span>
+          <div className="flex justify-between items-center gap-3 text-sm text-text-muted mt-2">
+            <span>Estimasi harga:</span>
             <span>
               {formatCurrency(simulation.valuationMin)} - {formatCurrency(simulation.valuationMax)}
             </span>
           </div>
         ) : null}
-        <div className="flex justify-between items-center text-sm text-text-muted mt-2">
+        <div className="mt-3 space-y-3">
+          <div className="flex justify-between items-center gap-3">
+            <span className="text-text-muted">Hasil estimasi yang dipilih:</span>
+            <span className="text-xl font-bold text-accent">{formatCurrency(selectedEstimate)}</span>
+          </div>
+          <div className="flex justify-between gap-3 text-sm text-text-muted">
+            <span>Sewa modal:</span>
+            <span className="font-semibold text-primary">{formatCurrency(sewaModal)}</span>
+          </div>
+          <div className="flex justify-between gap-3 text-sm text-text-muted">
+            <span>Admin:</span>
+            <span className="font-semibold text-primary">{formatCurrency(adminFee)}</span>
+          </div>
+          <div className="flex justify-between items-center gap-3 rounded-lg bg-white/70 p-3">
+            <span className="font-semibold text-primary">Hasil pinjaman yang diterima:</span>
+            <span className="text-xl font-bold text-primary">{formatCurrency(receivedLoanAmount)}</span>
+          </div>
+        </div>
+        <div className="flex justify-between items-center gap-3 text-sm text-text-muted mt-3">
           <span>Cabang:</span>
           <span>
             {simulation.branch?.NamaCabang}
-            {simulation.branchCode ? ` (${simulation.branchCode})` : ''}
+            {/* {simulation.branchCode ? ` (${simulation.branchCode})` : ''} */}
           </span>
         </div>
       </div>

@@ -6,6 +6,13 @@ import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, RotateCcw, Search } from 'lucide-react'
 import { getBranches } from '../../lib/services/branch.service'
 import {
+  calculateAdminFee,
+  calculateEstimatedMin,
+  calculateSewaModal,
+  getBarangEstimates,
+  type BarangEstimate,
+} from '../../lib/services/simulation.service'
+import {
   SIMULATION_CATEGORIES,
   SIMULATION_CATALOG,
   type SimulationCategoryKey,
@@ -15,6 +22,7 @@ import {
 import type { Branch, ItemCategory, SimulationData } from '../../lib/types'
 
 const ITEMS_PER_PAGE = 9
+const LOAN_SLIDER_STEP = 100000
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('id-ID', {
@@ -35,8 +43,40 @@ function mapCategoryKeyToItemCategory(key: SimulationCategoryKey): ItemCategory 
   }
 }
 
-function getSpecRange(spec: SimulationSpecOption): string {
-  return `${formatCurrency(spec.minValuation)} - ${formatCurrency(spec.maxValuation)}`
+function clampLoanAmount(amount: number, minimum: number, maximum: number): number {
+  if (amount < minimum) {
+    return minimum
+  }
+
+  if (amount > maximum) {
+    return maximum
+  }
+
+  return amount
+}
+
+function getLoanSliderStepCount(minimum: number, maximum: number): number {
+  return Math.max(Math.ceil((maximum - minimum) / LOAN_SLIDER_STEP), 1)
+}
+
+function getLoanAmountFromSliderStep(sliderStep: number, minimum: number, maximum: number): number {
+  const sliderStepCount = getLoanSliderStepCount(minimum, maximum)
+
+  if (sliderStep >= sliderStepCount) {
+    return maximum
+  }
+
+  return clampLoanAmount(minimum + sliderStep * LOAN_SLIDER_STEP, minimum, maximum)
+}
+
+function getSliderStepFromLoanAmount(amount: number, minimum: number, maximum: number): number {
+  const sliderStepCount = getLoanSliderStepCount(minimum, maximum)
+
+  if (amount >= maximum) {
+    return sliderStepCount
+  }
+
+  return Math.round((clampLoanAmount(amount, minimum, maximum) - minimum) / LOAN_SLIDER_STEP)
 }
 
 export function SimulationForm() {
@@ -46,6 +86,12 @@ export function SimulationForm() {
   const [currentPage, setCurrentPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState('')
   const [locationMessage, setLocationMessage] = useState('')
+  const [estimateMessage, setEstimateMessage] = useState('')
+  const [estimateLoading, setEstimateLoading] = useState(false)
+  const [apiLoadState, setApiLoadState] = useState<'idle' | 'loading' | 'loaded' | 'error'>('idle')
+  const [barangEstimates, setBarangEstimates] = useState<BarangEstimate[]>([])
+  const [selectedLoanAmount, setSelectedLoanAmount] = useState(0)
+  const [selectedTenor, setSelectedTenor] = useState<15 | 30>(15)
   const [branches, setBranches] = useState<Branch[]>([])
 
   const selectedCategoryKey = (simulation.category?.kode || 'HP') as SimulationCategoryKey
@@ -165,9 +211,137 @@ export function SimulationForm() {
     return selectedItem.specs.find((spec: SimulationSpecOption) => spec.label === simulation.specification)
   }, [selectedItem, simulation.specification])
 
-  const selectedRangeText = selectedSpec ? getSpecRange(selectedSpec) : null
   const branchCode = simulation.branchCode || simulation.branch?.id || ''
+  const selectedNoHp = selectedSpec?.apiCode || selectedSpec?.id || ''
 
+  useEffect(() => {
+    let isMounted = true
+
+    const loadBarangEstimates = async (noHP: string) => {
+      try {
+        setEstimateLoading(true)
+        setApiLoadState('loading')
+        setEstimateMessage('Mengambil estimasi harga dari API barang...')
+        const estimates = await getBarangEstimates(noHP)
+
+        if (!isMounted) {
+          return
+        }
+
+        setBarangEstimates(estimates)
+        setApiLoadState('loaded')
+
+        if (estimates.length === 0) {
+          setEstimateMessage('Data estimasi barang belum tersedia untuk kode ini. Menggunakan referensi katalog sementara.')
+        } else {
+          setEstimateMessage('Harga yang ditampilkan adalah estimasi dan akan difilter berdasarkan cabang yang dipilih.')
+        }
+      } catch {
+        if (isMounted) {
+          setBarangEstimates([])
+          setApiLoadState('error')
+          setEstimateMessage('Gagal mengambil estimasi dari API barang. Menggunakan referensi katalog sementara.')
+        }
+      } finally {
+        if (isMounted) {
+          setEstimateLoading(false)
+        }
+      }
+    }
+
+    if (!selectedNoHp) {
+      setBarangEstimates([])
+      setApiLoadState('idle')
+      setEstimateMessage('')
+      setEstimateLoading(false)
+      return () => {
+        isMounted = false
+      }
+    }
+
+    void loadBarangEstimates(selectedNoHp)
+
+    return () => {
+      isMounted = false
+    }
+  }, [selectedNoHp])
+
+  const selectedBranchEstimate = useMemo(() => {
+    if (!branchCode) {
+      return undefined
+    }
+
+    return barangEstimates.find(entry => entry.kodeCabang === branchCode)
+  }, [barangEstimates, branchCode])
+
+  const fallbackPriceRange = useMemo(() => {
+    if (!selectedSpec) {
+      return null
+    }
+
+    const maxCash = selectedSpec.maxValuation
+    return {
+      min: calculateEstimatedMin(maxCash),
+      max: maxCash,
+      source: 'catalog' as const,
+    }
+  }, [selectedSpec])
+
+  const activePriceRange = useMemo(() => {
+    if (selectedBranchEstimate && selectedBranchEstimate.maxCash > 0) {
+      return {
+        min: calculateEstimatedMin(selectedBranchEstimate.maxCash),
+        max: selectedBranchEstimate.maxCash,
+        source: 'api' as const,
+      }
+    }
+
+    if (apiLoadState === 'loaded' || apiLoadState === 'error') {
+      return fallbackPriceRange
+    }
+
+    return null
+  }, [apiLoadState, fallbackPriceRange, selectedBranchEstimate])
+
+  const selectedLoanAmountResolved = selectedLoanAmount || activePriceRange?.max || 0
+  const sewaModal = calculateSewaModal(selectedLoanAmountResolved, selectedTenor)
+  const adminFee = calculateAdminFee(selectedLoanAmountResolved)
+
+  useEffect(() => {
+    if (!activePriceRange) {
+      return
+    }
+
+    setSelectedLoanAmount(prev => {
+      if (prev >= activePriceRange.min && prev <= activePriceRange.max) {
+        return prev
+      }
+
+      return activePriceRange.max
+    })
+  }, [activePriceRange])
+
+  useEffect(() => {
+    if (!selectedItem || !activePriceRange || selectedLoanAmountResolved <= 0) {
+      return
+    }
+
+    setSimulation(prev => ({
+      ...prev,
+      apiCode: selectedNoHp || prev.apiCode,
+      tenor: selectedTenor,
+      valuationMin: activePriceRange.min,
+      valuationMax: activePriceRange.max,
+      estimatedMin: activePriceRange.min,
+      estimatedMax: activePriceRange.max,
+      loanAmount: selectedLoanAmountResolved,
+      valuation: selectedLoanAmountResolved,
+      sewaModal,
+      adminFee,
+    }))
+  }, [activePriceRange, adminFee, selectedItem, selectedLoanAmountResolved, selectedNoHp, selectedTenor, sewaModal])
+
+  const selectedRangeText = activePriceRange ? `${formatCurrency(activePriceRange.min)} - ${formatCurrency(activePriceRange.max)}` : null
   const handleSelectBranch = (branch: Branch) => {
     updateSimulation(prev => ({
       ...prev,
@@ -203,10 +377,21 @@ export function SimulationForm() {
       ...prev,
       itemName: item.name,
       specification: undefined,
+      apiCode: undefined,
       valuationMin: undefined,
       valuationMax: undefined,
       valuation: undefined,
+      loanAmount: undefined,
+      estimatedMin: undefined,
+      estimatedMax: undefined,
+      sewaModal: undefined,
+      adminFee: undefined,
     }))
+
+    setBarangEstimates([])
+    setApiLoadState('idle')
+    setEstimateMessage('')
+    setSelectedLoanAmount(0)
 
     setStep(4)
   }
@@ -216,15 +401,39 @@ export function SimulationForm() {
       ...prev,
       itemName: item.name,
       specification: spec.label,
-      valuationMin: spec.minValuation,
-      valuationMax: spec.maxValuation,
-      valuation: spec.maxValuation,
+      apiCode: spec.apiCode || spec.id,
+      valuationMin: undefined,
+      valuationMax: undefined,
+      valuation: undefined,
+      loanAmount: undefined,
+      estimatedMin: undefined,
+      estimatedMax: undefined,
+      sewaModal: undefined,
+      adminFee: undefined,
     }))
+
+    setBarangEstimates([])
+    setApiLoadState('idle')
+    setEstimateMessage('')
+    setSelectedLoanAmount(0)
   }
 
   const handleProceedToBooking = () => {
-    if (simulation.valuation && simulation.branch) {
-      localStorage.setItem('simulationData', JSON.stringify(simulation))
+    if (selectedLoanAmountResolved && simulation.branch && activePriceRange) {
+      const payload = {
+        ...simulation,
+        valuationMin: activePriceRange.min,
+        valuationMax: activePriceRange.max,
+        estimatedMin: activePriceRange.min,
+        estimatedMax: activePriceRange.max,
+        loanAmount: selectedLoanAmountResolved,
+        valuation: selectedLoanAmountResolved,
+        tenor: selectedTenor,
+        sewaModal,
+        adminFee,
+      }
+
+      localStorage.setItem('simulationData', JSON.stringify(payload))
       router.push('/booking')
     }
   }
@@ -280,7 +489,7 @@ export function SimulationForm() {
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="font-semibold text-primary">{branch.NamaCabang}</div>
                   <span className="rounded-full bg-primary/10 px-2 py-1 text-[11px] font-semibold text-primary">
-                    {branch.id}
+                    
                   </span>
                 </div>
                 <div className="text-sm text-text-muted">{branch.Kota}</div>
@@ -385,6 +594,7 @@ export function SimulationForm() {
             <p className="text-sm text-text-muted">
               Pilih barang dulu, lalu tentukan spesifikasinya. Nama barang yang sama tetap digabung.
             </p>
+            {estimateMessage ? <p className="text-sm text-text-muted">{estimateMessage}</p> : null}
           </div>
 
           <div className="grid grid-cols-1 gap-4 rounded-2xl border border-border bg-white p-4">
@@ -403,9 +613,9 @@ export function SimulationForm() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2 text-xs text-text-muted">
-              <span className="rounded-full bg-primary/10 px-3 py-1 font-semibold text-primary">
+              {/* <span className="rounded-full bg-primary/10 px-3 py-1 font-semibold text-primary">
                 Cabang {branchCode || '-'}
-              </span>
+              </span> */}
               <span className="rounded-full bg-gray-100 px-3 py-1">Kategori {selectedCategoryKey}</span>
             </div>
           </div>
@@ -413,8 +623,6 @@ export function SimulationForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredItems.map((item: SimulationItemOption) => {
               const isSelected = simulation.itemName === item.name
-              const minSpecValuation = Math.min(...item.specs.map(spec => spec.minValuation))
-              const maxSpecValuation = Math.max(...item.specs.map(spec => spec.maxValuation))
 
               return (
                 <motion.button
@@ -436,12 +644,6 @@ export function SimulationForm() {
                     <span className="rounded-full bg-accent/10 px-2 py-1 text-[11px] font-semibold text-accent">
                       {item.specs.length} spek
                     </span>
-                  </div>
-                  <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-text-muted">
-                    <span className="rounded-full bg-gray-100 px-3 py-1">
-                      {formatCurrency(minSpecValuation)} - {formatCurrency(maxSpecValuation)}
-                    </span>
-                    <span className="rounded-full bg-gray-100 px-3 py-1">Klik untuk pilih spesifikasi</span>
                   </div>
                 </motion.button>
               )
@@ -474,7 +676,7 @@ export function SimulationForm() {
               <div>
                 <h3 className="text-lg font-semibold text-primary">{selectedItem.name}</h3>
                 <p className="text-sm text-text-muted">
-                  Pilih spesifikasi agar estimasi cair tampil lebih akurat.
+                  Pilih spesifikasi untuk memuat estimasi harga dari API. Jika API gagal, sistem memakai katalog simulasi.
                 </p>
               </div>
 
@@ -497,10 +699,6 @@ export function SimulationForm() {
                           <div className="font-semibold text-primary">{spec.label}</div>
                           {spec.note ? <div className="mt-1 text-sm text-text-muted">{spec.note}</div> : null}
                         </div>
-                        <div className="text-right text-xs text-text-muted">
-                          <div>Estimasi cair</div>
-                          <div className="font-semibold text-primary">{getSpecRange(spec)}</div>
-                        </div>
                       </div>
                     </button>
                   )
@@ -514,7 +712,7 @@ export function SimulationForm() {
               <div>
                 <div className="text-xs uppercase tracking-wide text-text-muted">Cabang</div>
                 <div className="mt-1 font-semibold text-primary">{simulation.branch?.NamaCabang}</div>
-                <div className="text-sm text-text-muted">Kode: {branchCode}</div>
+                {/* <div className="text-sm text-text-muted">Kode: {branchCode}</div> */}
               </div>
               <div>
                 <div className="text-xs uppercase tracking-wide text-text-muted">Kategori</div>
@@ -533,12 +731,143 @@ export function SimulationForm() {
             <div className="rounded-xl bg-primary/5 p-4 border border-primary/10">
               <div className="text-sm text-text-muted">Estimasi cair</div>
               <div className="mt-1 text-3xl font-bold text-primary">
-                {selectedRangeText || '-'}
+                {apiLoadState === 'loading' ? 'Memuat harga...' : selectedRangeText || '-'}
               </div>
-              <div className="mt-2 text-sm text-text-muted">
-                Nilai booking akan memakai estimasi sementara ini sampai harga API final tersedia.
-              </div>
+              {/* <div className="mt-2 text-sm text-text-muted">
+                {apiLoadState === 'loading'
+                  ? 'Menunggu data harga dari API barang.'
+                  : activePriceRange?.source === 'api'
+                    ? 'Harga maksimal diambil dari API barang, lalu nominal pinjaman bisa dipilih sesuai range.'
+                    : 'Harga menggunakan katalog simulasi karena API tidak tersedia.'}
+              </div> */}
             </div>
+
+            {activePriceRange ? (
+              <div className="space-y-3 rounded-xl border border-border p-4">
+                <div>
+                  <div className="text-xs uppercase tracking-wide text-text-muted">Pilih nominal pinjaman</div>
+                  {/* <div className="mt-1 text-sm text-text-muted">
+                    Geser slider dengan jarak Rp 100.000 untuk memilih nominal di dalam range yang sudah ditentukan.
+                  </div> */}
+                </div>
+
+                <div className="rounded-xl border border-primary/10 bg-gradient-to-br from-primary/5 to-gray-50 p-4">
+                  <div className="flex flex-wrap items-end justify-between gap-3">
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-text-muted">Nominal dipilih</div>
+                      <div className="mt-1 text-2xl font-bold text-primary">
+                        {formatCurrency(selectedLoanAmountResolved || activePriceRange.max)}
+                      </div>
+                    </div>
+                    <div className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-primary shadow-sm">
+                      Maks. {formatCurrency(activePriceRange.max)}
+                    </div>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={getLoanSliderStepCount(activePriceRange.min, activePriceRange.max)}
+                    step={1}
+                    value={getSliderStepFromLoanAmount(
+                      selectedLoanAmountResolved || activePriceRange.max,
+                      activePriceRange.min,
+                      activePriceRange.max
+                    )}
+                    onChange={event =>
+                      setSelectedLoanAmount(
+                        getLoanAmountFromSliderStep(Number(event.target.value), activePriceRange.min, activePriceRange.max)
+                      )
+                    }
+                    className="mt-5 w-full cursor-pointer accent-primary"
+                  />
+                  <div className="mt-2 flex items-center justify-between gap-3 text-xs text-text-muted">
+                    <span>{formatCurrency(activePriceRange.min)}</span>
+                    <span>{formatCurrency(activePriceRange.max)}</span>
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedLoanAmount(activePriceRange.min)}
+                      className="rounded-lg border border-border bg-white px-3 py-2 text-sm font-semibold text-text-muted transition-colors hover:border-primary hover:text-primary"
+                    >
+                      Pilih minimum
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedLoanAmount(activePriceRange.max)}
+                      className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-dark"
+                    >
+                      Pilih maksimum
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="rounded-xl bg-primary/5 p-4 border border-primary/10">
+                    <div className="text-xs uppercase tracking-wide text-text-muted">Tarif sewa modal</div>
+                    <div className="mt-1 text-lg font-semibold text-primary">{formatCurrency(sewaModal)}</div>
+                    <div className="mt-2 flex gap-2 flex-wrap">
+                      {[15, 30].map(tenor => (
+                        <button
+                          key={tenor}
+                          type="button"
+                          onClick={() => setSelectedTenor(tenor as 15 | 30)}
+                          className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                            selectedTenor === tenor ? 'bg-primary text-white' : 'bg-gray-100 text-text-muted'
+                          }`}
+                        >
+                          {tenor} hari
+                        </button>
+                      ))}
+                    </div>
+                    <div className="mt-2 text-sm text-text-muted">
+                      {selectedTenor === 15
+                        ? '15 hari dikenakan 5% dari nominal pinjaman, dibulatkan ke atas per Rp 500.'
+                        : '30 hari dikenakan 10% dari nominal pinjaman, dibulatkan ke atas per Rp 500.'}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-border p-4">
+                    <div className="text-xs uppercase tracking-wide text-text-muted">Biaya admin</div>
+                    <div className="mt-1 text-lg font-semibold text-primary">{formatCurrency(adminFee)}</div>
+                    <div className="mt-2 text-sm text-text-muted">
+                      Dihitung 1% dari nominal pinjaman dan dibulatkan ke atas per Rp 500.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-border bg-white p-4">
+                  <div className="text-xs uppercase tracking-wide text-text-muted">Rincian estimasi</div>
+                  <div className="mt-3 space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm text-text-muted">Harga estimasi</span>
+                      <span className="font-semibold text-primary">{selectedRangeText || '-'}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm text-text-muted">Hasil estimasi yang dipilih</span>
+                      <span className="font-semibold text-primary">{formatCurrency(selectedLoanAmountResolved)}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm text-text-muted">Sewa modal</span>
+                      <span className="font-semibold text-primary">{formatCurrency(sewaModal)}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm text-text-muted">Admin</span>
+                      <span className="font-semibold text-primary">{formatCurrency(adminFee)}</span>
+                    </div>
+                  </div>
+                  <div className="mt-4 rounded-lg bg-primary/5 p-3 text-sm text-text-muted">
+                    Total biaya awal estimasi: <span className="font-semibold text-primary">{formatCurrency(sewaModal + adminFee)}</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-border p-4 text-sm text-text-muted">
+                {apiLoadState === 'loading'
+                  ? 'Sedang memuat harga dari API barang...'
+                  : 'Pilih spesifikasi untuk melihat harga dan nominal pinjaman.'}
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3">
@@ -550,10 +879,10 @@ export function SimulationForm() {
             </button>
             <button
               onClick={handleProceedToBooking}
-              disabled={!simulation.specification}
+              disabled={!simulation.specification || estimateLoading || !activePriceRange || !selectedLoanAmountResolved}
               className="flex-1 px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Lanjut Booking <ChevronRight size={18} />
+              {estimateLoading ? 'Memuat estimasi...' : 'Lanjut Booking'} <ChevronRight size={18} />
             </button>
           </div>
         </motion.div>

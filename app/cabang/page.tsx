@@ -12,6 +12,30 @@ const ITEMS_PER_PAGE = 9
 const RADIUS_OPTIONS = [5, 10, 25, 50]
 type SortOption = 'nearest' | 'az' | 'za' | 'city'
 
+function formatWhatsappPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, '')
+
+  if (digits.startsWith('0')) {
+    return `62${digits.slice(1)}`
+  }
+
+  if (digits.startsWith('62')) {
+    return digits
+  }
+
+  return digits
+}
+
+function getWhatsappUrl(branch: Branch): string {
+  const message = `(WEB) \nHallo Saya Tertarik Mau Tanya Gadai \n\n#${branch.id}`
+
+  return `https://wa.me/${formatWhatsappPhone(branch.Phone)}?text=${encodeURIComponent(message)}`
+}
+
+function getGoogleMapsUrl(branch: Branch): string {
+  return `https://www.google.com/maps?q=${branch.longitude},${branch.latitude}`
+}
+
 export default function CabangPage() {
   const [branches, setBranches] = useState<Branch[]>([])
   const [provinces, setProvinces] = useState<string[]>([])
@@ -354,10 +378,12 @@ export default function CabangPage() {
                       <div className="flex gap-3">
                         <Phone size={20} className="text-accent flex-shrink-0 mt-0.5" />
                         <a
-                          href={`tel:${branch.Phone}`}
+                          href={getWhatsappUrl(branch)}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="text-sm text-primary hover:text-accent transition-colors"
                         >
-                          {branch.Phone}
+                          {formatWhatsappPhone(branch.Phone)}
                         </a>
                       </div>
 
@@ -377,9 +403,26 @@ export default function CabangPage() {
                       </div>
                     )}
 
-                    <button className="w-full px-4 py-2 border-2 border-primary text-primary rounded-lg hover:bg-primary/5 transition-colors font-semibold">
-                      Hubungi
-                    </button>
+                    <div className="flex gap-2">
+                      <a
+                        href={getWhatsappUrl(branch)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 px-4 py-2 border-2 border-primary text-center text-primary rounded-lg hover:bg-primary/5 transition-colors font-semibold"
+                      >
+                        Hubungi
+                      </a>
+                      <a
+                        href={getGoogleMapsUrl(branch)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`Buka lokasi ${branch.NamaCabang} di Google Maps`}
+                        title="Buka Google Maps"
+                        className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary text-white transition-colors hover:bg-primary-dark"
+                      >
+                        <MapPin size={20} />
+                      </a>
+                    </div>
                   </motion.div>
                 ))}
               </div>

@@ -5,6 +5,7 @@ export interface SimulationSpecOption {
   label: string
   minValuation: number
   maxValuation: number
+  apiCode?: string
   note?: string
 }
 
@@ -42,7 +43,7 @@ export const SIMULATION_CATALOG: Record<SimulationCategoryKey, SimulationItemOpt
       summary: 'Unit aman, banyak dicari, dan cepat cair.',
       specs: [
         { id: 'iphone-11-64-ibox', label: 'IBOX 64GB', minValuation: 2200000, maxValuation: 2500000 },
-        { id: 'iphone-11-128-ibox', label: 'IBOX 128GB', minValuation: 2500000, maxValuation: 2850000 },
+        { id: 'iphone-11-128-ibox', label: 'IBOX 128GB', minValuation: 2500000, maxValuation: 2851000, apiCode: 'IP_11_128GB_IBOX' },
         { id: 'iphone-11-256-ibox', label: 'IBOX 256GB', minValuation: 2800000, maxValuation: 3150000 },
         { id: 'iphone-11-64-inter', label: 'INTER 64GB', minValuation: 2100000, maxValuation: 2400000 },
         { id: 'iphone-11-128-inter', label: 'INTER 128GB', minValuation: 2400000, maxValuation: 2750000 },

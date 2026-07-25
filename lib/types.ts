@@ -56,10 +56,13 @@ export interface ItemColor {
   valuation: number // Taksiran nilai
 }
 
+export type SimulationTenor = 15 | 30
+
 // Simulation/Booking types
 export interface SimulationData {
   branch?: Branch
   branchCode?: string
+  apiCode?: string
   category?: ItemCategory
   brand?: ItemBrand
   series?: ItemSeries
@@ -71,6 +74,12 @@ export interface SimulationData {
   specification?: string
   valuationMin?: number
   valuationMax?: number
+  estimatedMin?: number
+  estimatedMax?: number
+  loanAmount?: number
+  sewaModal?: number
+  adminFee?: number
+  tenor?: SimulationTenor
   quantity?: number
   valuation?: number
 }
