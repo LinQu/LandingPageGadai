@@ -34,8 +34,8 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/cek-pemesanan" className="hover:opacity-100 transition-opacity">
-                  Cek Pesanan
+                <Link href="/cek-status-gadai" className="hover:opacity-100 transition-opacity">
+                  Cek Status Gadai
                 </Link>
               </li>
               <li>

@@ -150,10 +150,10 @@ export default function BookingSuccessPage({ params }: { params: { bookingNumber
             className="flex flex-col sm:flex-row gap-4"
           >
             <Link
-              href="/cek-pemesanan"
+              href="/cek-status-gadai"
               className="flex-1 px-6 py-4 bg-primary text-white rounded-lg font-semibold hover:bg-primary-dark transition-colors text-center"
             >
-              Cek Status Pesanan
+              Cek Status Gadai
             </Link>
             <Link
               href="/"

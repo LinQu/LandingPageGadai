@@ -51,7 +51,7 @@
 - Booking number display and copy-to-clipboard
 - Status timeline visualization
 - Next steps instructions
-- Route: `/cek-pemesanan` - Check booking status with timeline
+- Route: `/cek-status-gadai` - Cek informasi status transaksi gadai
 
 ### 3. Content Management Pages
 

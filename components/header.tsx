@@ -20,7 +20,7 @@ export function Header() {
 
   const navItems = [
     { label: 'Simulasi', href: '/simulasi' },
-    { label: 'Cek Pesanan', href: '/cek-pemesanan' },
+    { label: 'Cek Status Gadai', href: '/cek-status-gadai' },
     { label: 'Arsip', href: '/arsip' },
     { label: 'Artikel', href: '/artikel' },
     { label: 'Cabang', href: '/cabang' },

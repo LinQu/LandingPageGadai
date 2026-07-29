@@ -35,8 +35,8 @@ app/
 ├── booking-success/
 │   └── [bookingNumber]/
 │       └── page.tsx          # Booking success page
-├── cek-pemesanan/
-│   └── page.tsx              # Check booking status page
+├── cek-status-gadai/
+│   └── page.tsx              # Cek status transaksi gadai
 ├── artikel/
 │   ├── page.tsx              # Articles listing
 │   └── [slug]/
