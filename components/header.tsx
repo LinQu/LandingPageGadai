@@ -30,7 +30,7 @@ export function Header() {
     <header
       className={`sticky top-0 z-50 transition-all duration-300 bg-primary`}
     >
-      <nav className="bg-primary max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ">
+      <nav className="relative bg-primary max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 font-bold text-xl text-primary">
@@ -63,8 +63,10 @@ export function Header() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden p-2 text-primary hover:bg-gray-100 rounded-lg"
+            className="md:hidden rounded-lg p-2 text-white transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             aria-label="Toggle menu"
+            aria-expanded={isOpen}
+            aria-controls="mobile-navigation"
           >
             {isOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -72,12 +74,12 @@ export function Header() {
 
         {/* Mobile Menu */}
         {isOpen && (
-          <div className="md:hidden pb-4 space-y-2">
+          <div id="mobile-navigation" className="md:hidden absolute inset-x-0 top-full z-50 space-y-1 border-b border-border bg-white p-3 shadow-lg">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="block px-4 py-2 text-text-main hover:bg-bg-light rounded-lg transition-colors"
+                className={`block rounded-lg px-4 py-3 font-medium transition-colors ${pathname === item.href ? 'bg-primary/10 text-primary' : 'text-text-main hover:bg-bg-light'}`}
                 onClick={() => setIsOpen(false)}
               >
                 {item.label}
@@ -85,7 +87,7 @@ export function Header() {
             ))}
             <Link
               href="/simulasi"
-              className="block px-4 py-2 bg-primary text-white rounded-lg text-center font-medium hover:bg-primary-dark transition-colors"
+              className="mt-2 block rounded-lg bg-primary px-4 py-3 text-center font-medium text-white transition-colors hover:bg-primary-dark"
               onClick={() => setIsOpen(false)}
             >
               Mulai Simulasi

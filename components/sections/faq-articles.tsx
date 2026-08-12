@@ -30,21 +30,21 @@ export function FAQSection() {
   }
 
   return (
-    <section id="faq" className="py-20 bg-white">
+    <section id="faq" className="py-14 sm:py-20 bg-white">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-10 sm:mb-16"
         >
           <span className="inline-block px-4 py-2 bg-accent/10 text-accent text-sm font-semibold rounded-full mb-4">
             ❓ FAQ
           </span>
-          <h2 className="text-4xl md:text-5xl font-bold text-primary mb-4">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary mb-4">
             Pertanyaan yang Sering Diajukan
           </h2>
-          <p className="text-lg text-text-muted">
+          <p className="text-base sm:text-lg text-text-muted">
             Temukan jawaban atas pertanyaan umum tentang layanan gadai kami.
           </p>
         </motion.div>
@@ -61,7 +61,7 @@ export function FAQSection() {
             >
               <button
                 onClick={() => setOpenId(openId === faq.id ? '' : faq.id)}
-                className="w-full px-6 py-4 flex items-center justify-between bg-bg-light hover:bg-primary-light/5 transition-colors"
+                className="w-full px-4 sm:px-6 py-4 flex items-center justify-between gap-3 bg-bg-light hover:bg-primary-light/5 transition-colors"
               >
                 <span className="font-semibold text-left text-primary">{faq.question}</span>
                 <ChevronDown
@@ -72,7 +72,7 @@ export function FAQSection() {
                 />
               </button>
               {openId === faq.id && (
-                <div className="px-6 py-4 border-t border-border bg-white">
+                <div className="px-4 sm:px-6 py-4 border-t border-border bg-white">
                   <p className="text-text-muted leading-relaxed">{faq.answer}</p>
                 </div>
               )}
@@ -121,26 +121,26 @@ export function ArticlesSection() {
   }
 
   return (
-    <section className="py-20 bg-bg-light">
+    <section className="py-14 sm:py-20 bg-bg-light">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-10 sm:mb-16"
         >
           <span className="inline-block px-4 py-2 bg-accent/10 text-accent text-sm font-semibold rounded-full mb-4">
             📰 ARTIKEL & TIPS
           </span>
-          <h2 className="text-4xl md:text-5xl font-bold text-primary mb-4">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary mb-4">
             Tips & Informasi Terbaru
           </h2>
-          <p className="text-lg text-text-muted max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg text-text-muted max-w-2xl mx-auto">
             Pelajari tips dan trik untuk mendapatkan taksiran terbaik untuk barang Anda.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-8 mb-12">
           {articles.map((article, idx) => (
             <motion.div
               key={article.id}
@@ -161,7 +161,7 @@ export function ArticlesSection() {
                 </div>
 
                 {/* Content */}
-                <div className="p-6">
+                <div className="p-5 sm:p-6">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-xs px-2 py-1 bg-accent/10 text-accent rounded font-semibold">
                       {article.category}

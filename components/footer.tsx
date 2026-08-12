@@ -3,7 +3,7 @@ import Link from 'next/link'
 export function Footer() {
   return (
     <footer className="bg-primary text-white" style={{ borderTop: '4px solid var(--accent)' }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           {/* Brand */}
           <div>
@@ -86,8 +86,8 @@ export function Footer() {
         {/* Divider */}
         <div className="border-t border-primary-light pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm opacity-90">
-            <p>&copy; 2021 PT Gadai Sakti Indonesia . Semua hak dilindungi.</p>
-            <div className="flex gap-6">
+            <p className="text-center md:text-left">&copy; 2021 PT Gadai Sakti Indonesia . Semua hak dilindungi.</p>
+            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
               <a href="#" className="hover:opacity-100 transition-opacity">
                 Kebijakan Privasi
               </a>

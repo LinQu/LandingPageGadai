@@ -14,26 +14,26 @@ export function CategoriesSection() {
   ]
 
   return (
-    <section className="py-20 bg-bg-light">
+    <section className="py-14 sm:py-20 bg-bg-light">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-10 sm:mb-16"
         >
           <span className="inline-block px-4 py-2 bg-accent/10 text-accent text-sm font-semibold rounded-full mb-4">
             📦 KATEGORI BARANG
           </span>
-          <h2 className="text-4xl md:text-5xl font-bold text-primary mb-4">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary mb-4">
             Apa Saja yang Bisa Digadai?
           </h2>
-          <p className="text-lg text-text-muted max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg text-text-muted max-w-2xl mx-auto">
             Gadai Sakti menerima berbagai jenis barang elektronik dan motor dengan harga taksiran yang kompetitif.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           {categories.map((cat, idx) => (
             <motion.div
               key={idx}
@@ -41,7 +41,7 @@ export function CategoriesSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: idx * 0.05 }}
-              className="p-6 bg-white rounded-lg hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer"
+              className="p-4 sm:p-6 bg-white rounded-lg hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer"
             >
               <div className="text-4xl mb-3 text-center">{cat.icon}</div>
               <div className="text-center font-semibold text-primary text-sm">{cat.name}</div>
@@ -69,17 +69,17 @@ export function CategoriesSection() {
 
 export function CTASection() {
   return (
-    <section className="py-20 bg-primary-light text-white">
+    <section className="py-14 sm:py-20 bg-primary-light text-white">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6">
             Butuh Dana Mendesak Sekarang Juga?
           </h2>
-          <p className="text-lg opacity-90 mb-8 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg opacity-90 mb-8 max-w-2xl mx-auto">
             Jangan tunggu lagi! Gadai barang Anda hari ini dan dapatkan dana dalam waktu kurang dari 30 menit. Proses mudah, cepat, dan terpercaya.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

@@ -6,27 +6,27 @@ import { ArrowRight, CheckCircle } from 'lucide-react'
 
 export function HeroSection() {
   return (
-    <section className="relative bg-gradient-to-b from-primary-light/10 to-white pt-20 pb-32">
+    <section className="relative bg-gradient-to-b from-primary-light/10 to-white py-12 sm:pt-20 sm:pb-24 lg:pb-32">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+        <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-2 md:gap-12">
           {/* Left Content */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="space-y-6">
+            <div className="space-y-5 sm:space-y-6">
               <div className="inline-block">
                 <span className="inline-block px-4 py-2 bg-accent/10 text-accent text-sm font-semibold rounded-full">
                   ⚡ Gadai Paling Cepat & Aman
                 </span>
               </div>
 
-              <h1 className="text-5xl md:text-6xl font-bold text-primary leading-tight">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-primary leading-tight">
                 Gadai Barang dengan Cepat, Aman & Terpercaya
               </h1>
 
-              <p className="text-lg text-text-muted leading-relaxed">
+              <p className="text-base sm:text-lg text-text-muted leading-relaxed">
                 Gadai smartphone, laptop, motor, dan barang berharga lainnya dengan proses super cepat hanya dalam 30 menit. Taksiran tertinggi hingga 90%, aman diasuransikan, dan resmi berizin OJK.
               </p>
 
@@ -37,8 +37,8 @@ export function HeroSection() {
                   'Barang diasuransikan penuh tanpa biaya',
                   'Resmi berizin OJK',
                 ].map((item, idx) => (
-                  <li key={idx} className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-accent flex-shrink-0" />
+                  <li key={idx} className="flex items-start gap-3">
+                    <CheckCircle className="mt-0.5 w-5 h-5 text-accent flex-shrink-0" />
                     <span className="text-text-main font-medium">{item}</span>
                   </li>
                 ))}
@@ -54,7 +54,7 @@ export function HeroSection() {
                 </Link>
                 <Link
                   href="/cabang"
-                  className="px-8 py-4 border-2 border-primary text-primary rounded-lg font-semibold hover:bg-primary-light/5 transition-colors"
+                  className="px-8 py-4 border-2 border-primary text-center text-primary rounded-lg font-semibold hover:bg-primary-light/5 transition-colors"
                 >
                   Lokasi Terdekat
                 </Link>
@@ -73,7 +73,7 @@ export function HeroSection() {
               <img
                 src="/hero-banner.png.png"
                 alt="Hero Banner Gadai Sakti"
-                className="w-full max-w-[640px] xl:max-w-[700px] h-auto object-contain drop-shadow-xl"
+                className="w-full max-w-[500px] md:max-w-[640px] xl:max-w-[700px] h-auto object-contain drop-shadow-xl"
               />
             </div>
           </motion.div>
