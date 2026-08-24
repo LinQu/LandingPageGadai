@@ -88,7 +88,7 @@ export function BookingForm() {
             : `${simulation.brand?.name} ${simulation.series?.name} ${simulation.variant?.name}`}
         </div>
         {simulation.valuationMin && simulation.valuationMax ? (
-          <div className="flex flex-col gap-1 text-sm text-text-muted sm:flex-row sm:items-center sm:justify-between sm:gap-3 mt-2">
+          <div className="flex justify-between items-center gap-3 text-sm text-text-muted mt-2">
             <span>Estimasi harga:</span>
             <span>
               {formatCurrency(simulation.valuationMin)} - {formatCurrency(simulation.valuationMax)}
@@ -96,7 +96,7 @@ export function BookingForm() {
           </div>
         ) : null}
         <div className="mt-3 space-y-3">
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+          <div className="flex justify-between items-center gap-3">
             <span className="text-text-muted">Hasil estimasi yang dipilih:</span>
             <span className="text-xl font-bold text-accent">{formatCurrency(selectedEstimate)}</span>
           </div>
@@ -108,12 +108,12 @@ export function BookingForm() {
             <span>Admin:</span>
             <span className="font-semibold text-primary">{formatCurrency(adminFee)}</span>
           </div>
-          <div className="flex flex-col gap-1 rounded-lg bg-white/70 p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+          <div className="flex justify-between items-center gap-3 rounded-lg bg-white/70 p-3">
             <span className="font-semibold text-primary">Hasil pinjaman yang diterima:</span>
             <span className="text-xl font-bold text-primary">{formatCurrency(receivedLoanAmount)}</span>
           </div>
         </div>
-        <div className="flex flex-col gap-1 text-sm text-text-muted sm:flex-row sm:items-center sm:justify-between sm:gap-3 mt-3">
+        <div className="flex justify-between items-center gap-3 text-sm text-text-muted mt-3">
           <span>Cabang:</span>
           <span>
             {simulation.branch?.NamaCabang}

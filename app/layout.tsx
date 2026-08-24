@@ -1,12 +1,13 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Poppins } from 'next/font/google'
+import Script from 'next/script'
 import './globals.css'
 
 const poppins = Poppins({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
-  variable: '--font-poppins',
+  variable: '--font-poppins-next',
 })
 
 export const metadata: Metadata = {
@@ -35,9 +36,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   colorScheme: 'light',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#13374d' },
-  ],
+  themeColor: '#13374d',
 }
 
 export default function RootLayout({
@@ -47,7 +46,21 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" className={poppins.variable}>
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossOrigin="anonymous"
+        />
+      </head>
       <body className="antialiased bg-bg-light">
+        <Script
+          src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+          crossOrigin="anonymous"
+          strategy="beforeInteractive"
+        />
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

@@ -2,102 +2,76 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import {
+  Bike,
+  Camera,
+  Laptop,
+  Plane,
+  Projector,
+  Radio,
+  Smartphone,
+  Speaker,
+  Tv,
+} from 'lucide-react'
+
+const categories = [
+  { name: 'Handphone', icon: Smartphone },
+  { name: 'Laptop', icon: Laptop },
+  { name: 'Kamera', icon: Camera },
+  { name: 'Televisi', icon: Tv },
+  { name: 'Proyektor', icon: Projector },
+  { name: 'Speaker Aktif', icon: Speaker },
+  { name: 'Home Theater', icon: Radio },
+  { name: 'Drone', icon: Plane },
+  { name: 'Motor', icon: Bike },
+]
 
 export function CategoriesSection() {
-  const categories = [
-    { icon: '📱', name: 'Smartphone', emoji: true },
-    { icon: '💻', name: 'Laptop', emoji: true },
-    { icon: '📷', name: 'Kamera', emoji: true },
-    { icon: '🚁', name: 'Drone', emoji: true },
-    { icon: '🏍️', name: 'Motor', emoji: true },
-    { icon: '📺', name: 'TV/Monitor', emoji: true },
-  ]
-
   return (
-    <section className="py-14 sm:py-20 bg-bg-light">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="relative overflow-hidden bg-primary py-14 text-white sm:py-16">
+      <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(135deg,transparent_0%,transparent_48%,white_49%,transparent_50%,transparent_100%)] [background-size:180px_180px]" />
+      <div className="relative mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-10 sm:mb-16"
+          viewport={{ once: true, amount: 0.35 }}
+          className="text-center"
         >
-          <span className="inline-block px-4 py-2 bg-accent/10 text-accent text-sm font-semibold rounded-full mb-4">
-            📦 KATEGORI BARANG
-          </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary mb-4">
-            Apa Saja yang Bisa Digadai?
-          </h2>
-          <p className="text-base sm:text-lg text-text-muted max-w-2xl mx-auto">
-            Gadai Sakti menerima berbagai jenis barang elektronik dan motor dengan harga taksiran yang kompetitif.
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/85">Layanan Kami</p>
+          <h2 className="mt-2 text-3xl font-bold text-white sm:text-4xl">Barang yang Bisa Digadaikan</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-white/70">
+            Temukan jenis barang elektronik dan kendaraan yang dapat digadaikan di Gadai Sakti dan ajukan penaksiran dengan mudah.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-          {categories.map((cat, idx) => (
+        <div className="mt-10 flex flex-wrap justify-center gap-5">
+          {categories.map(({ name, icon: Icon }, idx) => (
             <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 20 }}
+              key={name}
+              initial={{ opacity: 0, y: 18 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: idx * 0.05 }}
-              className="p-4 sm:p-6 bg-white rounded-lg hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer"
+              transition={{ delay: idx * 0.045 }}
+              className="group w-[145px] rounded-lg bg-white p-3 text-center shadow-lg shadow-slate-950/20 transition-transform hover:-translate-y-1 sm:w-[165px]"
             >
-              <div className="text-4xl mb-3 text-center">{cat.icon}</div>
-              <div className="text-center font-semibold text-primary text-sm">{cat.name}</div>
+              <div className="flex h-24 items-center justify-center rounded-md bg-slate-50 text-primary sm:h-28">
+                <Icon size={58} strokeWidth={1.45} className="transition-transform duration-300 group-hover:scale-105" />
+              </div>
+              <h3 className="mt-3 text-xs font-extrabold uppercase tracking-wide text-slate-900 sm:text-sm">{name}</h3>
+              <Link
+                href="/simulasi"
+                className="mt-2 inline-flex rounded-full bg-primary px-3 py-1 text-[10px] font-medium text-white transition-colors hover:bg-accent"
+              >
+                Gadaikan Sekarang
+              </Link>
             </motion.div>
           ))}
         </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mt-12 text-center"
-        >
-          <Link
-            href="/simulasi"
-            className="inline-block px-8 py-4 bg-primary text-white rounded-lg font-semibold hover:bg-primary-dark transition-colors"
-          >
-            Simulasikan Barang Anda
-          </Link>
-        </motion.div>
       </div>
     </section>
   )
 }
 
 export function CTASection() {
-  return (
-    <section className="py-14 sm:py-20 bg-primary-light text-white">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-        >
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6">
-            Butuh Dana Mendesak Sekarang Juga?
-          </h2>
-          <p className="text-base sm:text-lg opacity-90 mb-8 max-w-2xl mx-auto">
-            Jangan tunggu lagi! Gadai barang Anda hari ini dan dapatkan dana dalam waktu kurang dari 30 menit. Proses mudah, cepat, dan terpercaya.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/simulasi"
-              className="px-8 py-4 bg-white text-primary rounded-lg font-semibold hover:bg-gray-100 transition-colors"
-            >
-              Mulai Sekarang
-            </Link>
-            <Link
-              href="/cabang"
-              className="px-8 py-4 border-2 border-white text-white rounded-lg font-semibold hover:bg-white/10 transition-colors"
-            >
-              Temukan Cabang Kami
-            </Link>
-          </div>
-        </motion.div>
-      </div>
-    </section>
-  )
+  return null
 }

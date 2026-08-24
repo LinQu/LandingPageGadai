@@ -8,10 +8,10 @@ export default function SimulasiPage() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-bg-light py-8 sm:py-12">
+      <main className="min-h-screen bg-bg-light py-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
-            <h1 className="text-3xl sm:text-4xl font-bold text-primary mb-2">Simulasi Gadai</h1>
+            <h1 className="text-4xl font-bold text-primary mb-2">Simulasi Gadai</h1>
             <p className="text-text-muted">
               Pilih cabang otomatis dari API, lalu cari barang dan spesifikasinya untuk melihat estimasi cair.
             </p>

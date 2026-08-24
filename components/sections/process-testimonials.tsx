@@ -1,88 +1,81 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { getTestimonials, getAverageRating } from '@/lib/services/misc.service'
-import { useEffect, useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight, Star } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import {
+  Banknote,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  IdCard,
+  SearchCheck,
+  Star,
+} from 'lucide-react'
+import { getAverageRating, getTestimonials } from '@/lib/services/misc.service'
 import type { Testimonial } from '@/lib/types'
 
-export function ProcessSection() {
-  const steps = [
-    {
-      number: 1,
-      title: 'Pilih Barang',
-      description: 'Tentukan barang yang ingin Anda gadai melalui simulasi kami',
-    },
-    {
-      number: 2,
-      title: 'Dapatkan Taksiran',
-      description: 'Lihat taksiran nilai barang Anda hingga 90% dari nilai pasaran',
-    },
-    {
-      number: 3,
-      title: 'Buat Pesanan',
-      description: 'Isi data diri Anda dan pilih cabang Gadai Sakti terdekat',
-    },
-    {
-      number: 4,
-      title: 'Kunjungi Cabang',
-      description: 'Datang ke cabang dengan membawa dokumen dan barang Anda',
-    },
-    {
-      number: 5,
-      title: 'Verifikasi',
-      description: 'Tim kami akan memverifikasi dan mengkonfirmasi taksiran Anda',
-    },
-    {
-      number: 6,
-      title: 'Terima Dana',
-      description: 'Dapatkan dana Anda dalam waktu kurang dari 30 menit',
-    },
-  ]
+const processSteps = [
+  {
+    number: 1,
+    icon: ClipboardList,
+    title: 'Ajukan Taksiran',
+    description: 'Isi form online atau hubungi tim Gadai Sakti untuk mendapatkan perkiraan taksiran awal.',
+  },
+  {
+    number: 2,
+    icon: IdCard,
+    title: 'Bawa Barang & KTP',
+    description: 'Kunjungi cabang Gadai Sakti terdekat dengan membawa barang jaminan dan kartu identitas.',
+  },
+  {
+    number: 3,
+    icon: SearchCheck,
+    title: 'Taksir Nilai Barang',
+    description: 'Tim kami memeriksa kondisi barang dan menentukan nilai taksiran secara transparan.',
+  },
+  {
+    number: 4,
+    icon: Banknote,
+    title: 'Dana Cair',
+    description: 'Jika nilai gadai disetujui, proses administrasi diselesaikan dan dana dapat diterima.',
+  },
+]
 
+export function ProcessSection() {
   return (
-    <section className="py-14 sm:py-20 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="relative overflow-hidden bg-primary py-14 text-white sm:py-16">
+      <div className="absolute inset-0 opacity-[0.06] [background-image:radial-gradient(circle_at_30%_30%,white_0,transparent_28%),radial-gradient(circle_at_75%_70%,white_0,transparent_28%)]" />
+      <div className="relative mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-10 sm:mb-16"
+          className="text-center"
         >
-          <span className="inline-block px-4 py-2 bg-accent/10 text-accent text-sm font-semibold rounded-full mb-4">
-            🚀 CARA KERJA
-          </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary mb-4">
-            Proses Gadai yang Sangat Mudah
-          </h2>
-          <p className="text-base sm:text-lg text-text-muted max-w-2xl mx-auto">
-            Hanya 6 langkah sederhana untuk mendapatkan dana yang Anda butuhkan.
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/85">Proses Gadai</p>
+          <h2 className="mt-2 text-3xl font-bold text-white sm:text-4xl">4 Langkah Mudah Pencairan</h2>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
-          {steps.map((step, idx) => (
+        <div className="relative mt-11 grid gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-12">
+          <div className="absolute left-[8%] right-[8%] top-9 hidden border-t border-dashed border-white/60 lg:block" />
+          {processSteps.map(({ number, icon: Icon, title, description }, index) => (
             <motion.div
-              key={idx}
+              key={title}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: idx * 0.1 }}
-              className="relative"
+              transition={{ delay: index * 0.08 }}
+              className="relative z-10 pt-6"
             >
-              {/* Connector line */}
-              {idx < steps.length - 1 && (
-                <div className="hidden lg:block absolute -right-4 top-12 w-8 h-0.5 bg-accent/20"></div>
-              )}
-
-              <div className="p-5 sm:p-8 bg-bg-light rounded-xl">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold flex-shrink-0">
-                    {step.number}
-                  </div>
-                  <h3 className="text-lg font-bold text-primary">{step.title}</h3>
-                </div>
-                <p className="text-text-muted text-sm">{step.description}</p>
+              <div className="absolute left-1/2 top-0 flex h-16 w-16 -translate-x-1/2 items-center justify-center rounded-full border-4 border-primary bg-accent text-white shadow-md">
+                <Icon size={27} strokeWidth={1.7} />
+                <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[11px] font-bold text-accent shadow">
+                  {number}
+                </span>
+              </div>
+              <div className="mt-8 min-h-[168px] rounded-lg bg-white px-5 pb-5 pt-11 text-center shadow-lg shadow-slate-950/20">
+                <h3 className="text-sm font-bold text-primary">{title}</h3>
+                <p className="mt-3 text-xs leading-5 text-text-muted">{description}</p>
               </div>
             </motion.div>
           ))}
@@ -93,115 +86,134 @@ export function ProcessSection() {
 }
 
 export function TestimonialsSection() {
-  const carouselRef = useRef<HTMLDivElement>(null)
   const [testimonials, setTestimonials] = useState<Testimonial[]>([])
-  const [averageRating, setAverageRating] = useState(0)
+  const [activeIndex, setActiveIndex] = useState(0)
   const [loading, setLoading] = useState(true)
-
-  const scrollTestimonials = (direction: 'left' | 'right') => {
-    const carousel = carouselRef.current
-
-    if (!carousel) {
-      return
-    }
-
-    carousel.scrollBy({
-      left: direction === 'left' ? -carousel.clientWidth : carousel.clientWidth,
-      behavior: 'smooth',
-    })
-  }
+  const averageRating = getAverageRating()
 
   useEffect(() => {
+    let active = true
+
     async function loadTestimonials() {
       const data = await getTestimonials()
+      if (!active) return
       setTestimonials(data)
-      setAverageRating(getAverageRating())
       setLoading(false)
     }
-    loadTestimonials()
+
+    void loadTestimonials()
+    return () => {
+      active = false
+    }
   }, [])
 
-  if (loading) {
-    return (
-      <section className="py-20 bg-bg-light">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <div className="text-text-muted">Memuat testimoni...</div>
-        </div>
-      </section>
-    )
+  const visibleTestimonials = useMemo(() => {
+    if (testimonials.length === 0) return []
+    return Array.from({ length: Math.min(3, testimonials.length) }, (_, offset) => {
+      return testimonials[(activeIndex + offset) % testimonials.length]
+    })
+  }, [activeIndex, testimonials])
+
+  const move = (direction: -1 | 1) => {
+    if (testimonials.length === 0) return
+    setActiveIndex(index => (index + direction + testimonials.length) % testimonials.length)
   }
 
   return (
-    <section className="py-14 sm:py-20 bg-bg-light">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-10"
-        >
-          <span className="inline-block px-4 py-2 bg-accent/10 text-accent text-sm font-semibold rounded-full mb-4">
-            ⭐ TESTIMONI
-          </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary mb-4">
-            Apa Kata Pelanggan Kami?
-          </h2>
-          <div className="flex items-center justify-center gap-2 mb-2">
-            {[...Array(5)].map((_, i) => (
-              <Star
-                key={i}
-                size={20}
-                className={i < Math.round(averageRating) ? 'fill-accent text-accent' : 'text-gray-300'}
-              />
-            ))}
-          </div>
-          <p className="text-base sm:text-lg text-text-muted">Rata-rata {averageRating.toFixed(1)} / 5 dari {testimonials.length} pelanggan</p>
-        </motion.div>
-
-        <div className="mb-6 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={() => scrollTestimonials('left')}
-            aria-label="Testimoni sebelumnya"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-white text-primary transition-colors hover:border-primary hover:bg-primary/5"
-          >
-            <ChevronLeft size={20} />
-          </button>
-          <button
-            type="button"
-            onClick={() => scrollTestimonials('right')}
-            aria-label="Testimoni berikutnya"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white transition-colors hover:bg-primary-dark"
-          >
-            <ChevronRight size={20} />
-          </button>
+    <section className="bg-[#f8f9fb] py-14 sm:py-16">
+      <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+        <div className="text-center">
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-accent">Testimoni Nasabah</p>
+          <h2 className="mt-2 text-3xl font-bold text-primary sm:text-4xl">Dipercaya oleh Nasabah Gadai Sakti</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-text-muted">
+            Terima kasih atas kepercayaan yang telah diberikan. Ini pengalaman nyata mereka bersama Gadai Sakti Indonesia.
+          </p>
         </div>
 
-        <div
-          ref={carouselRef}
-          className="flex snap-x snap-mandatory gap-4 sm:gap-6 overflow-x-auto scroll-smooth pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        >
-          {testimonials.map((testimonial, idx) => (
-            <motion.div
-              key={testimonial.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.08 }}
-              className="min-h-full flex-none basis-full snap-start rounded-xl bg-white p-5 sm:p-6 shadow-sm transition-shadow hover:shadow-md sm:basis-[calc(50%-12px)] lg:basis-[calc(25%-18px)]"
-            >
-              <div className="flex gap-1 mb-4">
-                {[...Array(testimonial.rating)].map((_, i) => (
-                  <Star key={i} size={16} className="fill-accent text-accent" />
+        <div className="mt-9 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="rounded-xl border border-slate-200 bg-white p-7 text-center shadow-lg shadow-slate-950/10 sm:p-8"
+          >
+            <div className="text-7xl font-bold tracking-[-0.06em] text-primary sm:text-8xl">{averageRating.toFixed(1)}</div>
+            <div className="mt-3 flex justify-center gap-1">
+              {Array.from({ length: 5 }, (_, index) => (
+                <Star key={index} size={28} className="fill-amber-400 text-amber-400" />
+              ))}
+            </div>
+            <p className="mt-3 text-xs font-medium text-text-muted">Rating Berdasarkan Ulasan Pelanggan</p>
+
+            <div className="mt-7 grid grid-cols-3 gap-3">
+              {[
+                ['300+', 'Ulasan Google'],
+                ['25+', 'Cabang Dinilai'],
+                ['99%', 'Ulasan Positif'],
+              ].map(([value, label]) => (
+                <div key={label} className="rounded-lg bg-accent px-2 py-4 text-white shadow-sm">
+                  <div className="text-xl font-bold sm:text-2xl">{value}</div>
+                  <div className="mt-1 text-[10px] font-medium sm:text-xs">{label}</div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="rounded-xl border border-slate-200 bg-white p-5 shadow-lg shadow-slate-950/10 sm:p-6"
+          >
+            <div className="mb-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => move(-1)}
+                aria-label="Testimoni sebelumnya"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-primary transition hover:border-primary"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => move(1)}
+                aria-label="Testimoni berikutnya"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-primary transition hover:border-primary"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+
+            {loading ? (
+              <div className="flex min-h-[315px] items-center justify-center text-sm text-text-muted">Memuat testimoni...</div>
+            ) : (
+              <div className="space-y-3">
+                {visibleTestimonials.map(testimonial => (
+                  <article key={testimonial.id} className="rounded-lg border border-slate-200 p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">
+                        {testimonial.name.charAt(0)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div>
+                            <h3 className="text-xs font-bold text-slate-800">{testimonial.name}</h3>
+                            <p className="text-[10px] text-slate-400">{testimonial.role}</p>
+                          </div>
+                          <div className="flex gap-0.5">
+                            {Array.from({ length: testimonial.rating }, (_, index) => (
+                              <Star key={index} size={11} className="fill-amber-400 text-amber-400" />
+                            ))}
+                          </div>
+                        </div>
+                        <p className="mt-2 text-xs leading-5 text-text-muted">{testimonial.content}</p>
+                      </div>
+                    </div>
+                  </article>
                 ))}
               </div>
-              <p className="text-text-muted mb-4 italic">&quot;{testimonial.content}&quot;</p>
-              <div className="border-t pt-4">
-                <div className="font-semibold text-primary text-sm">{testimonial.name}</div>
-                <div className="text-xs text-text-muted">{testimonial.role}</div>
-              </div>
-            </motion.div>
-          ))}
+            )}
+          </motion.div>
         </div>
       </div>
     </section>

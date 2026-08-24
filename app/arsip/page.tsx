@@ -1,132 +1,71 @@
 'use client'
 
+import { useEffect, useMemo, useState } from 'react'
+import { FileText, Search } from 'lucide-react'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
-import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
-import { Calendar, Package } from 'lucide-react'
-import { getArchiveItems } from '@/lib/services/misc.service'
-import { formatCurrency } from '@/lib/services/booking.service'
-import type { ArchiveItem } from '@/lib/types'
+import type { CompanyArchive } from '@/lib/types'
+
+function reviveArchive(raw: any): CompanyArchive {
+  return { ...raw, id: String(raw.id), year: Number(raw.year), publishedAt: new Date(raw.publishedAt) }
+}
 
 export default function ArsipPage() {
-  const [items, setItems] = useState<ArchiveItem[]>([])
+  const [items, setItems] = useState<CompanyArchive[]>([])
+  const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const loadItems = async () => {
-      const data = await getArchiveItems()
-      setItems(data)
-      setLoading(false)
-    }
-    loadItems()
+    fetch('/api/archives', { cache: 'no-store' })
+      .then(response => response.json())
+      .then(payload => setItems((payload.data || []).map(reviveArchive)))
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false))
   }, [])
 
-  if (loading) {
-    return (
-      <>
-        <Header />
-        <main className="min-h-screen bg-bg-light py-12">
-          <div className="text-center text-text-muted">Memuat arsip...</div>
-        </main>
-        <Footer />
-      </>
-    )
-  }
+  const filtered = useMemo(() => {
+    const keyword = query.trim().toLowerCase()
+    if (!keyword) return items
+    return items.filter(item => `${item.title} ${item.documentType} ${item.year}`.toLowerCase().includes(keyword))
+  }, [items, query])
 
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-bg-light py-12">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-12"
-          >
-            <h1 className="text-4xl font-bold text-primary mb-2">Riwayat Gadai</h1>
-            <p className="text-text-muted">
-              Lihat semua riwayat gadai Anda di sini.
-            </p>
-          </motion.div>
+      <main className="min-h-screen bg-white py-10 md:py-14">
+        <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-accent">Dokumen Perusahaan</p>
+            <h1 className="mt-2 text-4xl font-extrabold text-primary">Arsip</h1>
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-text-muted">Laporan dan publikasi perusahaan. Data saat ini masih dummy dan sudah disiapkan untuk dikelola dari panel internal.</p>
+          </div>
 
-          {/* Items List */}
-          {items.length > 0 ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="space-y-4"
-            >
-              {items.map((item, idx) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                  className="bg-white p-6 rounded-lg hover:shadow-md transition-shadow"
-                >
-                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
-                    {/* Booking Number */}
-                    <div>
-                      <div className="text-xs text-text-muted mb-1">Nomor Pesanan</div>
-                      <div className="font-semibold text-primary">{item.bookingNumber}</div>
-                    </div>
+          <div className="mx-auto mt-7 flex max-w-xl items-center gap-2 rounded-lg border border-slate-300 px-4 focus-within:border-primary">
+            <Search size={17} className="text-slate-400" />
+            <input value={query} onChange={event => setQuery(event.target.value)} placeholder="Cari arsip..." className="h-11 w-full bg-transparent text-sm outline-none" />
+          </div>
 
-                    {/* Item Name */}
-                    <div>
-                      <div className="text-xs text-text-muted mb-1">Item</div>
-                      <div className="font-semibold text-primary line-clamp-2">{item.itemName}</div>
-                    </div>
-
-                    {/* Valuation */}
-                    <div>
-                      <div className="text-xs text-text-muted mb-1">Taksiran</div>
-                      <div className="font-semibold text-accent">
-                        {formatCurrency(item.valuation)}
-                      </div>
-                    </div>
-
-                    {/* Date */}
-                    <div>
-                      <div className="text-xs text-text-muted mb-1">Tanggal</div>
-                      <div className="text-sm text-primary flex items-center gap-2">
-                        <Calendar size={16} />
-                        {item.bookingDate.toLocaleDateString('id-ID')}
-                      </div>
-                    </div>
-
-                    {/* Status */}
-                    <div>
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          item.status === 'active'
-                            ? 'bg-yellow-100 text-yellow-700'
-                            : item.status === 'redeemed'
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-blue-100 text-blue-700'
-                        }`}
-                      >
-                        {item.status === 'active'
-                          ? 'Aktif'
-                          : item.status === 'redeemed'
-                            ? 'Ditebus'
-                            : 'Diperpanjang'}
-                      </span>
+          {loading ? <div className="py-20 text-center text-sm text-text-muted">Memuat arsip...</div> : (
+            <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+              {filtered.map(item => (
+                <article key={item.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="flex aspect-[16/8] items-center justify-center rounded-lg bg-gradient-to-br from-slate-50 to-slate-100">
+                    <div className="text-center">
+                      <FileText size={40} className="mx-auto text-accent" />
+                      <span className="mt-2 block text-xs font-bold uppercase tracking-wider text-primary">{item.documentType}</span>
+                      <span className="mt-1 block text-3xl font-extrabold text-primary">{item.year}</span>
                     </div>
                   </div>
-                </motion.div>
+                  <h2 className="mt-4 text-base font-bold text-primary">{item.title}</h2>
+                  <p className="mt-2 text-xs leading-5 text-text-muted">{item.description}</p>
+                  {item.fileUrl ? (
+                    <a href={item.fileUrl} target="_blank" rel="noreferrer" className="mt-4 inline-flex rounded-md bg-primary px-4 py-2 text-xs font-bold text-white">Buka Dokumen</a>
+                  ) : (
+                    <span className="mt-4 inline-flex rounded-md bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-500">Dokumen dummy</span>
+                  )}
+                </article>
               ))}
-            </motion.div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center py-20"
-            >
-              <Package size={64} className="mx-auto text-gray-300 mb-4" />
-              <p className="text-text-muted">Belum ada riwayat gadai.</p>
-            </motion.div>
+            </div>
           )}
         </div>
       </main>

@@ -20,6 +20,7 @@ A comprehensive Next.js 16 application built with React 19, featuring:
 - **State Management**: SWR for data fetching and client-side caching
 - **Carousel**: Embla Carousel
 - **Font**: Google Poppins
+- **Branch Map**: Leaflet 1.9.4 + OpenStreetMap tiles (no Google Maps JavaScript API)
 
 ## Project Structure
 
@@ -161,9 +162,14 @@ pnpm start
 ## Environment Variables
 
 ```env
-# Add any future API endpoints here
+# Backend endpoint used by app/api/cabang/route.ts and other server integrations
+NSS_API_URL=https://your-backend-endpoint.example
+
+# Optional public API base URL if needed by other integrations
 NEXT_PUBLIC_API_URL=http://localhost:3000/api
 ```
+
+> Browser geolocation works on `localhost` during development and requires HTTPS in production. The map layer is loaded from Leaflet's official CDN and uses OpenStreetMap tiles with attribution.
 
 ## Performance Optimizations
 
@@ -194,3 +200,19 @@ Proprietary - PT Gadai Sakti Nusantara
 
 **Last Updated**: 2024
 **Version**: 1.0.0
+
+## Update: Artikel, Tentang Kami, Arsip, dan Internal
+
+Route baru/revisi:
+
+- `/artikel` - daftar artikel 3 kolom + search + pagination.
+- `/artikel/[slug]` - layout detail artikel + CTA gadai.
+- `/tentang-kami` - profil perusahaan sesuai arah mockup.
+- `/arsip` - arsip dokumen perusahaan (dummy fallback).
+- `/internal/login` - login admin.
+- `/internal` - dashboard internal.
+- `/internal/artikel` - manajemen artikel MySQL.
+- `/internal/arsip` - manajemen arsip MySQL.
+- `/internal/tools` - placeholder tools internal berikutnya.
+
+Lihat `INTERNAL-SETUP.md` untuk konfigurasi MySQL dan autentikasi.

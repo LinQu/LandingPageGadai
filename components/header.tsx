@@ -2,8 +2,16 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Menu, X } from 'lucide-react'
+
+const navItems = [
+  { label: 'Beranda', href: '/' },
+  { label: 'Lokasi Cabang', href: '/cabang' },
+  { label: 'Artikel', href: '/artikel' },
+  { label: 'Tentang Kami', href: '/tentang-kami' },
+  { label: 'Karir', href: '/karir' },
+]
 
 export function Header() {
   const pathname = usePathname()
@@ -11,90 +19,85 @@ export function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50)
-    }
+    const handleScroll = () => setIsScrolled(window.scrollY > 12)
+    handleScroll()
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const navItems = [
-    { label: 'Simulasi', href: '/simulasi' },
-    { label: 'Cek Status Gadai', href: '/cek-status-gadai' },
-    { label: 'Arsip', href: '/arsip' },
-    { label: 'Artikel', href: '/artikel' },
-    { label: 'Cabang', href: '/cabang' },
-  ]
+  const isActive = (href: string) => {
+    if (href === '/') return pathname === '/'
+    if (href.startsWith('/#')) return false
+    return pathname.startsWith(href)
+  }
 
   return (
     <header
-      className={`sticky top-0 z-50 transition-all duration-300 bg-primary`}
+      className={`sticky top-0 z-50 bg-primary text-white transition-shadow duration-300 ${
+        isScrolled ? 'shadow-lg shadow-slate-950/10' : ''
+      }`}
     >
-      <nav className="relative bg-primary max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 font-bold text-xl text-primary">
-            <img src="/logo.png" alt="Gadai Sakti" className="h-8 w-auto" />
-          </Link>
+      <nav className="mx-auto flex h-[70px] max-w-7xl items-center justify-between px-5 sm:px-6 lg:px-8">
+        <Link href="/" className="shrink-0" aria-label="Gadai Sakti - Beranda">
+          <img src="/logo.png" alt="Gadai Sakti" className="h-8 w-auto" />
+        </Link>
 
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-8 text-white">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`text-sm text-white font-medium transition-colors ${
-                  pathname === item.href
-                    ? 'text-white'
-                    : 'text-text-main hover:text-white'
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
+        <div className="hidden items-center gap-7 lg:flex">
+          {navItems.map(item => (
             <Link
-              href="/simulasi"
-              className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium"
+              key={item.label}
+              href={item.href}
+              className={`relative py-2 text-sm font-medium text-white/85 transition-colors hover:text-white ${
+                isActive(item.href)
+                  ? 'after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:bg-white'
+                  : ''
+              }`}
             >
-              Mulai Simulasi
+              {item.label}
             </Link>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden rounded-lg p-2 text-white transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-            aria-label="Toggle menu"
-            aria-expanded={isOpen}
-            aria-controls="mobile-navigation"
+          ))}
+          <Link
+            href="/simulasi"
+            className="rounded-md border border-white/35 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-primary"
           >
-            {isOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+            Simulasi Gadai
+          </Link>
         </div>
 
-        {/* Mobile Menu */}
-        {isOpen && (
-          <div id="mobile-navigation" className="md:hidden absolute inset-x-0 top-full z-50 space-y-1 border-b border-border bg-white p-3 shadow-lg">
-            {navItems.map((item) => (
+        <button
+          type="button"
+          onClick={() => setIsOpen(open => !open)}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-white/20 text-white transition-colors hover:bg-white/10 lg:hidden"
+          aria-expanded={isOpen}
+          aria-label={isOpen ? 'Tutup menu' : 'Buka menu'}
+        >
+          {isOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
+      </nav>
+
+      {isOpen ? (
+        <div className="border-t border-white/10 bg-primary px-5 pb-5 lg:hidden">
+          <div className="mx-auto flex max-w-7xl flex-col gap-1 pt-3">
+            {navItems.map(item => (
               <Link
-                key={item.href}
+                key={item.label}
                 href={item.href}
-                className={`block rounded-lg px-4 py-3 font-medium transition-colors ${pathname === item.href ? 'bg-primary/10 text-primary' : 'text-text-main hover:bg-bg-light'}`}
                 onClick={() => setIsOpen(false)}
+                className="rounded-md px-3 py-3 text-sm font-medium text-white/90 transition-colors hover:bg-white/10 hover:text-white"
               >
                 {item.label}
               </Link>
             ))}
             <Link
               href="/simulasi"
-              className="mt-2 block rounded-lg bg-primary px-4 py-3 text-center font-medium text-white transition-colors hover:bg-primary-dark"
               onClick={() => setIsOpen(false)}
+              className="mt-2 rounded-md bg-accent px-4 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-accent-dark"
             >
-              Mulai Simulasi
+              Simulasi Gadai
             </Link>
           </div>
-        )}
-      </nav>
+        </div>
+      ) : null}
     </header>
   )
 }

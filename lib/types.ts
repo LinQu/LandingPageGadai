@@ -126,6 +126,20 @@ export interface ArchiveItem {
   status: 'active' | 'redeemed' | 'extended'
 }
 
+
+
+export interface CompanyArchive {
+  id: string
+  title: string
+  slug: string
+  description: string
+  year: number
+  documentType: string
+  fileUrl: string
+  coverImage: string
+  publishedAt: Date
+}
+
 // FAQ types
 export interface FAQItem {
   id: string
@@ -142,3 +156,41 @@ export interface Testimonial {
   rating: number
   image?: string
 }
+
+// Career types
+export type JobStatus = 'draft' | 'published' | 'closed'
+
+export interface CareerJob {
+  id: string
+  title: string
+  slug: string
+  summary: string
+  description: string
+  responsibilities: string[]
+  qualifications: string[]
+  benefits: string[]
+  locationCity: string
+  locationProvince: string
+  employmentType: string
+  workMode: string
+  experienceLevel: string
+  education: string
+  salaryMin?: number | null
+  salaryMax?: number | null
+  applicationDeadline?: Date | null
+  publishedAt?: Date | null
+  status: JobStatus
+}
+
+export type CareerApplicationStatus =
+  | 'submitted'
+  | 'hr_review'
+  | 'psychotest_invited'
+  | 'psychotest_completed'
+  | 'interview_hr'
+  | 'interview_user'
+  | 'document_check'
+  | 'offering'
+  | 'hired'
+  | 'rejected'
+  | 'withdrawn'

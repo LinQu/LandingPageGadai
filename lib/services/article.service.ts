@@ -1,48 +1,64 @@
 import type { Article } from '../types'
-import { articles } from '../dummy-data'
+import { articleSeed } from '../content/article-seed'
 
-// Get all articles
+function reviveArticle(raw: any): Article {
+  return {
+    ...raw,
+    id: String(raw.id),
+    publishedAt: raw.publishedAt instanceof Date ? raw.publishedAt : new Date(raw.publishedAt),
+    readTime: Number(raw.readTime || 5),
+  }
+}
+
+async function fetchJson(path: string) {
+  const response = await fetch(path, { cache: 'no-store' })
+  if (!response.ok) throw new Error(`Request gagal: ${response.status}`)
+  return response.json()
+}
+
 export async function getArticles(): Promise<Article[]> {
-  await new Promise(resolve => setTimeout(resolve, 300))
-  return articles.sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime())
+  try {
+    const payload = await fetchJson('/api/articles')
+    return (payload.data || []).map(reviveArticle)
+  } catch {
+    return articleSeed.slice().sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime())
+  }
 }
 
-// Get article by slug
 export async function getArticleBySlug(slug: string): Promise<Article | null> {
-  await new Promise(resolve => setTimeout(resolve, 200))
-  return articles.find(a => a.slug === slug) || null
+  try {
+    const payload = await fetchJson(`/api/articles/${encodeURIComponent(slug)}`)
+    return payload.data ? reviveArticle(payload.data) : null
+  } catch {
+    return articleSeed.find(article => article.slug === slug) || null
+  }
 }
 
-// Get article by ID
 export async function getArticleById(id: string): Promise<Article | null> {
-  await new Promise(resolve => setTimeout(resolve, 200))
-  return articles.find(a => a.id === id) || null
+  const articles = await getArticles()
+  return articles.find(article => article.id === id) || null
 }
 
-// Get articles by category
 export async function getArticlesByCategory(category: string): Promise<Article[]> {
-  await new Promise(resolve => setTimeout(resolve, 200))
-  return articles.filter(a => a.category === category)
+  const articles = await getArticles()
+  return articles.filter(article => article.category === category)
 }
 
-// Search articles
 export async function searchArticles(query: string): Promise<Article[]> {
-  await new Promise(resolve => setTimeout(resolve, 300))
+  const articles = await getArticles()
   const lowerQuery = query.toLowerCase()
-  return articles.filter(a =>
-    a.title.toLowerCase().includes(lowerQuery) ||
-    a.description.toLowerCase().includes(lowerQuery) ||
-    a.content.toLowerCase().includes(lowerQuery)
+  return articles.filter(article =>
+    article.title.toLowerCase().includes(lowerQuery) ||
+    article.description.toLowerCase().includes(lowerQuery) ||
+    article.content.toLowerCase().includes(lowerQuery)
   )
 }
 
-// Get featured articles (latest 3)
 export async function getFeaturedArticles(): Promise<Article[]> {
-  const allArticles = await getArticles()
-  return allArticles.slice(0, 3)
+  const articles = await getArticles()
+  return articles.slice(0, 3)
 }
 
-// Get unique categories
 export function getArticleCategories(): string[] {
-  return [...new Set(articles.map(a => a.category))]
+  return [...new Set(articleSeed.map(article => article.category))]
 }
