@@ -1,29 +1,19 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import {
-  Bike,
-  Camera,
-  Laptop,
-  Plane,
-  Projector,
-  Radio,
-  Smartphone,
-  Speaker,
-  Tv,
-} from 'lucide-react'
 
 const categories = [
-  { name: 'Handphone', icon: Smartphone },
-  { name: 'Laptop', icon: Laptop },
-  { name: 'Kamera', icon: Camera },
-  { name: 'Televisi', icon: Tv },
-  { name: 'Proyektor', icon: Projector },
-  { name: 'Speaker Aktif', icon: Speaker },
-  { name: 'Home Theater', icon: Radio },
-  { name: 'Drone', icon: Plane },
-  { name: 'Motor', icon: Bike },
+  { name: 'Handphone', image: '/HP.png' },
+  { name: 'Laptop', image: '/LPTP.png' },
+  { name: 'Kamera', image: '/KAMERA.png' },
+  { name: 'Televisi', image: '/TV.png' },
+  { name: 'Proyektor', image: '/PROYEKTOR.png' },
+  { name: 'Speaker Aktif', image: '/SPEAKER.png' },
+  { name: 'Home Theater', image: '/HOME.png' },
+  { name: 'Drone', image: '/DRONE.png' },
+  { name: 'Motor', image: '/MTR.png' },
 ]
 
 export function CategoriesSection() {
@@ -45,7 +35,7 @@ export function CategoriesSection() {
         </motion.div>
 
         <div className="mt-10 flex flex-wrap justify-center gap-5">
-          {categories.map(({ name, icon: Icon }, idx) => (
+          {categories.map(({ name, image }, idx) => (
             <motion.div
               key={name}
               initial={{ opacity: 0, y: 18 }}
@@ -54,8 +44,14 @@ export function CategoriesSection() {
               transition={{ delay: idx * 0.045 }}
               className="group w-[145px] rounded-lg bg-white p-3 text-center shadow-lg shadow-slate-950/20 transition-transform hover:-translate-y-1 sm:w-[165px]"
             >
-              <div className="flex h-24 items-center justify-center rounded-md bg-slate-50 text-primary sm:h-28">
-                <Icon size={58} strokeWidth={1.45} className="transition-transform duration-300 group-hover:scale-105" />
+              <div className="flex h-24 items-center justify-center overflow-hidden rounded-md bg-slate-50 p-2 sm:h-28">
+                <Image
+                  src={image}
+                  alt={name}
+                  width={80}
+                  height={80}
+                  className="h-16 w-auto object-contain transition-transform duration-300 group-hover:scale-105 sm:h-20"
+                />
               </div>
               <h3 className="mt-3 text-xs font-extrabold uppercase tracking-wide text-slate-900 sm:text-sm">{name}</h3>
               <Link
