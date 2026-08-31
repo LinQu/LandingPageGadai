@@ -53,9 +53,15 @@ export async function createAdminSession(adminId: number) {
   )
 
   const cookieStore = await cookies()
+
   cookieStore.set(INTERNAL_SESSION_COOKIE, rawToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure:
+      process.env.INTERNAL_COOKIE_SECURE === 'true'
+        ? true
+        : process.env.INTERNAL_COOKIE_SECURE === 'false'
+          ? false
+          : process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     path: '/',
     expires: expiresAt,

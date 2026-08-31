@@ -8,17 +8,17 @@ const highlights = [
   {
     icon: Zap,
     title: 'Proses Cepat',
-    description: 'Hanya membutuhkan waktu sekitar 30 menit untuk pencairan.',
+    description: 'Proses taksiran dan pencairan dibuat praktis di cabang.',
   },
   {
     icon: ShieldCheck,
     title: 'Barang Terjaga',
-    description: 'Barang tersimpan aman di gudang dan terlindungi.',
+    description: 'Barang jaminan disimpan dengan prosedur keamanan.',
   },
   {
     icon: ClipboardCheck,
     title: 'Syarat Mudah',
-    description: 'Cukup membawa KTP dan barang jaminan.',
+    description: 'Siapkan identitas dan barang jaminan untuk proses gadai.',
   },
   {
     icon: Landmark,
@@ -29,58 +29,102 @@ const highlights = [
 
 export function HeroSection() {
   return (
-    <section id="beranda" className="relative overflow-hidden bg-[#dff4ff]">
-      <div className="absolute right-5 top-12 h-14 w-28 rounded-full bg-white/55 blur-[1px] sm:right-16" />
-      <div className="absolute -bottom-20 left-[-8%] h-44 w-[60%] rounded-[50%] bg-[#b9dc63] sm:h-52" />
-      <div className="absolute -bottom-24 left-[17%] h-44 w-[60%] rounded-[50%] bg-[#8bae00] sm:h-52" />
-      <div className="absolute -bottom-24 right-[-12%] h-48 w-[70%] rounded-[50%] bg-[#7d9f00] sm:h-56" />
+    <section id="beranda" className="overflow-hidden bg-white">
+      <div className="relative isolate min-h-[650px] overflow-hidden md:min-h-[500px] lg:aspect-[1920/700] lg:min-h-[520px] lg:max-h-[700px]">
+        <picture className="absolute inset-0 block h-full w-full" aria-hidden="true">
+          <source media="(max-width: 767px)" srcSet="/images/hero/hero-gadai-mobile.webp" type="image/webp" />
+          <source media="(max-width: 1023px)" srcSet="/images/hero/hero-gadai-tablet.webp" type="image/webp" />
+          <img
+            src="/images/hero/hero-gadai-desktop.webp"
+            alt=""
+            width="1920"
+            height="700"
+            fetchPriority="high"
+            className="h-full w-full object-cover object-[55%_top] md:object-center 2xl:object-contain 2xl:object-right"
+          />
+        </picture>
 
-      <div className="relative mx-auto min-h-[520px] max-w-7xl px-5 pb-8 pt-14 sm:px-6 lg:px-8 lg:pb-0 lg:pt-20">
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55 }}
-          className="max-w-3xl"
-        >
-          <h1 className="text-4xl font-extrabold uppercase tracking-[-0.045em] text-primary sm:text-5xl lg:text-[58px] lg:leading-[1.02]">
-            Gadai Sakti Indonesia
-          </h1>
-          <p className="mt-4 max-w-2xl text-2xl font-medium leading-snug text-primary/90 sm:text-3xl">
-            Gadai Elektronik & Motor Instan,
-            <br className="hidden sm:block" /> Terjamin, dan Terpercaya
-          </p>
-          <p className="mt-5 max-w-xl text-sm leading-6 text-slate-700 sm:text-[15px]">
-            Penasaran berapa nilai barang kamu? Gunakan fitur Taksir Barang Online kami untuk mendapatkan estimasi awal nilai gadai secara online, kemudian lanjutkan proses di cabang Gadai Sakti terdekat.
-          </p>
-          <div className="mt-6 flex flex-wrap items-center gap-4">
-            <Link
-              href="/simulasi"
-              className="inline-flex items-center gap-2 rounded-md bg-accent px-5 py-3 text-sm font-semibold text-white shadow-md shadow-red-950/10 transition hover:bg-accent-dark"
+        {/*
+          Mobile image is composed vertically with the operational visual at the top
+          and clear space below. Tablet/desktop use a horizontal composition with
+          clear space on the left, so the gradient direction changes by breakpoint.
+        */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white/0 via-white/5 to-white/95 md:bg-gradient-to-r md:from-white/95 md:via-white/75 md:to-white/0" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_0%,transparent_68%,rgba(255,255,255,0.78)_100%)] md:hidden" />
+
+        <div className="relative mx-auto flex h-full min-h-[650px] max-w-7xl items-end px-5 pb-9 pt-[300px] sm:px-6 md:min-h-[500px] md:items-center md:py-10 lg:min-h-[520px] lg:px-8 lg:py-12">
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="w-full max-w-[560px] rounded-2xl border border-white/70 bg-white/[0.90] p-5 shadow-lg shadow-slate-900/5 backdrop-blur-[2px] md:max-w-[48%] md:rounded-none md:border-0 md:bg-transparent md:p-0 md:shadow-none md:backdrop-blur-none lg:max-w-[570px]"
+          >
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-accent sm:text-xs">
+              Solusi Gadai Cepat & Terpercaya
+            </p>
+
+            <h1 className="text-[34px] font-extrabold uppercase leading-[1.04] tracking-[-0.045em] text-primary sm:text-[36px] md:text-[42px] lg:text-[52px] xl:text-[58px]">
+              Gadai Sakti Indonesia
+            </h1>
+
+            <p className="mt-3 text-[19px] font-semibold leading-snug text-primary/90 sm:text-[20px] md:text-[22px] lg:text-[27px]">
+              Gadai Elektronik & Motor Instan,
+              <br className="hidden md:block" /> Terjamin, dan Terpercaya
+            </p>
+
+            <p className="mt-4 max-w-[520px] text-[13px] leading-6 text-slate-700 sm:text-[12px] md:text-[13px] lg:text-[14px]">
+              Dapatkan estimasi awal nilai gadai secara online, lalu lanjutkan proses dengan pelayanan langsung di cabang Gadai Sakti terdekat.
+            </p>
+
+            <div className="mt-5 flex flex-wrap items-center gap-3 sm:mt-6">
+              <Link
+                href="/simulasi"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-accent px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-red-950/10 transition hover:bg-accent-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+              >
+                Mulai Simulasi Gadai
+                <ArrowRight size={17} />
+              </Link>
+
+              <Link
+                href="/cabang"
+                className="inline-flex min-h-11 items-center justify-center rounded-md border border-primary/30 bg-white/80 px-5 py-2.5 text-sm font-semibold text-primary backdrop-blur-sm transition hover:border-primary hover:bg-white"
+              >
+                Temukan Cabang
+              </Link>
+            </div>
+
+            <p className="mt-3 max-w-md text-[10px] italic leading-4 text-slate-500 sm:text-[11px]">
+              *Estimasi awal dapat berubah setelah pemeriksaan fisik barang di cabang.
+            </p>
+          </motion.div>
+        </div>
+      </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.12 }}
+        className="relative z-10 bg-primary text-white shadow-[0_-8px_30px_rgba(15,23,42,0.08)]"
+      >
+        <div className="mx-auto grid max-w-7xl grid-cols-2 px-3 sm:px-6 md:grid-cols-4 lg:px-8">
+          {highlights.map(({ icon: Icon, title, description }, index) => (
+            <div
+              key={title}
+              className={`flex min-h-[112px] items-start gap-3 px-3 py-4 sm:min-h-[126px] sm:px-4 sm:py-5 md:items-center md:border-l md:border-white/10 md:first:border-l-0 lg:px-5 ${
+                index < 2 ? 'border-b border-white/10 md:border-b-0' : ''
+              } ${index % 2 === 1 ? 'border-l border-white/10' : ''}`}
             >
-              Mulai Simulasi Gadai
-              <ArrowRight size={17} />
-            </Link>
-            <span className="text-xs italic text-slate-600">*Estimasi awal dapat berubah setelah pemeriksaan fisik di cabang.</span>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, delay: 0.18 }}
-          className="relative z-10 mt-12 grid overflow-hidden rounded-xl border border-white/10 bg-primary/95 text-white shadow-xl shadow-slate-950/10 sm:grid-cols-2 lg:absolute lg:bottom-0 lg:right-8 lg:mt-0 lg:w-[610px] lg:grid-cols-4 lg:rounded-b-none"
-        >
-          {highlights.map(({ icon: Icon, title, description }) => (
-            <div key={title} className="border-white/10 p-4 text-center sm:border-r last:border-r-0 lg:min-h-[160px]">
-              <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full border border-white/50 bg-white/5">
-                <Icon size={22} strokeWidth={1.6} />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/35 bg-white/5 sm:h-11 sm:w-11">
+                <Icon size={20} strokeWidth={1.7} />
               </div>
-              <h2 className="text-sm font-semibold text-white">{title}</h2>
-              <p className="mt-2 text-[11px] leading-4 text-white/72">{description}</p>
+              <div>
+                <h2 className="text-[13px] font-semibold text-white sm:text-sm">{title}</h2>
+                <p className="mt-1 hidden text-[10px] leading-4 text-white/70 sm:block lg:text-[11px]">{description}</p>
+              </div>
             </div>
           ))}
-        </motion.div>
-      </div>
+        </div>
+      </motion.div>
     </section>
   )
 }
