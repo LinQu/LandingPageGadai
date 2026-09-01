@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { Archive, BrainCircuit, BriefcaseBusiness, FileText, LayoutDashboard, Wrench } from 'lucide-react'
-import { getCurrentAdmin } from '@/lib/internal/auth'
+import { Archive, BrainCircuit, BriefcaseBusiness, FileText, LayoutDashboard, Package, Wrench } from 'lucide-react'
 import { LogoutButton } from '@/components/internal/logout-button'
 
 export const dynamic = 'force-dynamic'
@@ -10,7 +9,7 @@ const menu = [
   { href: '/internal', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/internal/artikel', label: 'Artikel', icon: FileText },
   { href: '/internal/arsip', label: 'Arsip', icon: Archive },
-  { href: '/internal/karir', label: 'Karir & Pelamar', icon: BriefcaseBusiness },
+  { href: '/internal/barang', label: 'Master Barang', icon: Package },
   { href: '/internal/psikotes', label: 'Psikotes', icon: BrainCircuit },
   { href: '/internal/tools', label: 'Tools', icon: Wrench },
 ]
