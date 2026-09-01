@@ -19,7 +19,7 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-5 py-12 sm:px-6 lg:px-8">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[1.35fr_0.75fr_0.75fr_1.15fr]">
           <div id="tentang-kami">
-            <img src="/logo.png" alt="Gadai Sakti" className="h-9 w-auto" />
+            <img src="/logo.png" alt="Gadai Sakti" className="block h-auto w-[250px] max-w-full object-contain" />
             <p className="mt-5 max-w-md text-xs leading-5 text-white/72">
               Gadai Sakti hadir sebagai mitra finansial yang memberikan solusi dana tunai instan dengan proses yang mudah, taksiran akurat dan kompetitif, serta jaminan keamanan penuh atas barang berharga Anda.
             </p>

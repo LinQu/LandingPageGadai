@@ -1,0 +1,6 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getCurrentAdmin } from '@/lib/internal/auth'
+import { idOf, orderOf, statusOf, text } from '@/lib/internal/pawn'
+import { listVariants, updateVariant } from '@/lib/pawn-catalog-store'
+export const runtime='nodejs'
+export async function PATCH(request:NextRequest,context:{params:Promise<{id:string}>}){const admin=await getCurrentAdmin();if(!admin)return NextResponse.json({error:'Unauthorized'},{status:401});const {id}=await context.params;if(!/^\d+$/.test(id))return NextResponse.json({error:'ID tidak valid.'},{status:400});const x=await request.json().catch(()=>({}));const productId=idOf(x.productId),name=text(x.name,180),apiCode=text(x.apiCode,190);if(!productId||!name||!apiCode)return NextResponse.json({error:'Produk, nama variant, dan API code wajib diisi.'},{status:400});const updated=updateVariant(Number(id),{productId,name,apiCode,defaultPrice:x.defaultPrice===undefined||x.defaultPrice===null||x.defaultPrice===''?null:Number(x.defaultPrice),internalNote:text(x.internalNote,65535)||undefined,sortOrder:orderOf(x.sortOrder),status:statusOf(x.status)});if(!updated)return NextResponse.json({error:'Variant atau produk tidak ditemukan.'},{status:404});return NextResponse.json({ok:true})}

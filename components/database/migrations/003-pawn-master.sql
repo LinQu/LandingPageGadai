@@ -1,0 +1,16 @@
+-- Apply this migration to existing installations after 002-career-psychotest.sql.
+CREATE TABLE IF NOT EXISTS pawn_categories (
+ id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, name VARCHAR(120) NOT NULL, slug VARCHAR(140) NOT NULL, image_url VARCHAR(1000) NULL, sort_order SMALLINT UNSIGNED NOT NULL DEFAULT 0, status ENUM('active','inactive') NOT NULL DEFAULT 'active', created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, PRIMARY KEY(id), UNIQUE KEY uq_pawn_categories_slug(slug), KEY idx_pawn_categories_list(status,sort_order,name)
+) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS pawn_brands (
+ id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, name VARCHAR(120) NOT NULL, slug VARCHAR(140) NOT NULL, logo_url VARCHAR(1000) NULL, sort_order SMALLINT UNSIGNED NOT NULL DEFAULT 0, status ENUM('active','inactive') NOT NULL DEFAULT 'active', created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, PRIMARY KEY(id), UNIQUE KEY uq_pawn_brands_slug(slug), KEY idx_pawn_brands_list(status,sort_order,name)
+) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS pawn_products (
+ id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, category_id BIGINT UNSIGNED NOT NULL, brand_id BIGINT UNSIGNED NOT NULL, name VARCHAR(180) NOT NULL, slug VARCHAR(190) NOT NULL, description TEXT NULL, search_keywords TEXT NULL, image_url VARCHAR(1000) NULL, sort_order SMALLINT UNSIGNED NOT NULL DEFAULT 0, status ENUM('active','inactive') NOT NULL DEFAULT 'active', created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, PRIMARY KEY(id), UNIQUE KEY uq_pawn_products_slug(slug), KEY idx_pawn_products_list(status,category_id,brand_id,sort_order,name), CONSTRAINT fk_pawn_products_category FOREIGN KEY(category_id) REFERENCES pawn_categories(id) ON DELETE RESTRICT, CONSTRAINT fk_pawn_products_brand FOREIGN KEY(brand_id) REFERENCES pawn_brands(id) ON DELETE RESTRICT
+) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS pawn_product_variants (
+ id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, product_id BIGINT UNSIGNED NOT NULL, name VARCHAR(180) NOT NULL, api_code VARCHAR(190) NOT NULL, internal_note TEXT NULL, sort_order SMALLINT UNSIGNED NOT NULL DEFAULT 0, status ENUM('active','inactive') NOT NULL DEFAULT 'active', created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, PRIMARY KEY(id), KEY idx_pawn_variants_product(product_id,status,sort_order,name), KEY idx_pawn_variants_api_code(api_code), CONSTRAINT fk_pawn_variants_product FOREIGN KEY(product_id) REFERENCES pawn_products(id) ON DELETE RESTRICT
+) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS admin_audit_logs (
+ id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, admin_user_id BIGINT UNSIGNED NULL, entity_type VARCHAR(80) NOT NULL, entity_id BIGINT UNSIGNED NOT NULL, action VARCHAR(80) NOT NULL, before_data LONGTEXT NULL, after_data LONGTEXT NULL, ip_address VARCHAR(64) NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY(id), KEY idx_admin_audit_entity(entity_type,entity_id,created_at), CONSTRAINT fk_admin_audit_user FOREIGN KEY(admin_user_id) REFERENCES admin_users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;

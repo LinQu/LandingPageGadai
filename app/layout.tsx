@@ -2,6 +2,7 @@ import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Poppins } from 'next/font/google'
 import Script from 'next/script'
+import { FloatingHelp } from '@/components/floating-help'
 import './globals.css'
 
 const poppins = Poppins({
@@ -62,6 +63,7 @@ export default function RootLayout({
           strategy="beforeInteractive"
         />
         {children}
+        <FloatingHelp />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

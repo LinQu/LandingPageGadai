@@ -1,0 +1,307 @@
+.root {
+  position: fixed;
+  right: max(18px, env(safe-area-inset-right));
+  bottom: max(20px, calc(env(safe-area-inset-bottom) + 14px));
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.suspended {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.trigger,
+.menu {
+  pointer-events: auto;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 58px;
+  border: 1px solid rgba(18, 62, 84, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 12px 34px rgba(15, 23, 42, 0.18);
+  color: #123e54;
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    width 280ms cubic-bezier(.2,.8,.2,1),
+    padding 280ms cubic-bezier(.2,.8,.2,1),
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    opacity 180ms ease;
+  backdrop-filter: blur(10px);
+}
+
+.trigger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.22);
+}
+
+.trigger:focus-visible,
+.closeButton:focus-visible,
+.menuAction:focus-visible {
+  outline: 3px solid rgba(239, 49, 57, 0.28);
+  outline-offset: 3px;
+}
+
+.triggerCompact {
+  width: 58px;
+  padding: 4px;
+}
+
+.triggerExpanded {
+  width: 214px;
+  padding: 4px 17px 4px 4px;
+}
+
+.avatar {
+  position: relative;
+  display: block;
+  flex: 0 0 50px;
+  width: 50px;
+  height: 50px;
+  overflow: visible;
+  border-radius: 999px;
+  background: #ef3139;
+  box-shadow: 0 0 0 2px #fff;
+}
+
+.avatarImage {
+  border-radius: 999px;
+  object-fit: cover;
+}
+
+.onlineDot {
+  position: absolute;
+  right: 1px;
+  bottom: 2px;
+  width: 10px;
+  height: 10px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: #22c55e;
+}
+
+.triggerText {
+  display: grid;
+  min-width: 0;
+  margin-left: 11px;
+  text-align: left;
+  white-space: nowrap;
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 180ms ease 80ms, transform 180ms ease 80ms;
+}
+
+.triggerText strong {
+  font-size: 13px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #0f172a;
+}
+
+.triggerText small {
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.triggerCompact .triggerText {
+  width: 0;
+  margin-left: 0;
+  opacity: 0;
+  transform: translateX(6px);
+}
+
+.menu {
+  width: min(326px, calc(100vw - 28px));
+  overflow: hidden;
+  border: 1px solid rgba(18, 62, 84, 0.1);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 20px 52px rgba(15, 23, 42, 0.22);
+  animation: menuIn 180ms ease-out;
+  backdrop-filter: blur(12px);
+}
+
+.menuHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 17px 17px 13px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.menuEyebrow {
+  margin: 0 0 4px;
+  font-size: 9px;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #ef3139;
+}
+
+.menuTitle {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.25;
+  font-weight: 700;
+  color: #123e54;
+}
+
+.closeButton {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #fff;
+  color: #475569;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.closeButton:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  color: #123e54;
+}
+
+.menuActions {
+  display: grid;
+  gap: 4px;
+  padding: 8px;
+}
+
+.menuAction {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 58px;
+  padding: 9px 10px;
+  border-radius: 12px;
+  color: #123e54;
+  text-decoration: none;
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+.menuAction:hover {
+  background: #f4f7f9;
+  transform: translateX(2px);
+}
+
+.menuIcon {
+  display: inline-flex;
+  flex: 0 0 38px;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: rgba(239, 49, 57, 0.09);
+  color: #ef3139;
+}
+
+.menuAction span:last-child {
+  display: grid;
+  min-width: 0;
+}
+
+.menuAction strong {
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: 700;
+  color: #123e54;
+}
+
+.menuAction small {
+  margin-top: 3px;
+  font-size: 10px;
+  line-height: 1.35;
+  font-weight: 500;
+  color: #64748b;
+}
+
+@keyframes menuIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 640px) {
+  .root {
+    right: max(12px, env(safe-area-inset-right));
+    bottom: max(14px, calc(env(safe-area-inset-bottom) + 10px));
+  }
+
+  .trigger {
+    min-height: 54px;
+  }
+
+  .triggerCompact {
+    width: 54px;
+  }
+
+  .triggerExpanded {
+    width: 188px;
+    padding-right: 14px;
+  }
+
+  .avatar {
+    flex-basis: 46px;
+    width: 46px;
+    height: 46px;
+  }
+
+  .triggerText {
+    margin-left: 9px;
+  }
+
+  .triggerText strong {
+    font-size: 12px;
+  }
+
+  .triggerText small {
+    font-size: 10px;
+  }
+
+  .menu {
+    width: min(308px, calc(100vw - 24px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trigger,
+  .triggerText,
+  .menuAction,
+  .suspended {
+    transition: none !important;
+  }
+
+  .menu {
+    animation: none;
+  }
+}

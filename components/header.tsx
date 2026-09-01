@@ -37,9 +37,13 @@ export function Header() {
         isScrolled ? 'shadow-lg shadow-slate-950/10' : ''
       }`}
     >
-      <nav className="mx-auto flex h-[70px] max-w-7xl items-center justify-between px-5 sm:px-6 lg:px-8">
-        <Link href="/" className="shrink-0" aria-label="Gadai Sakti - Beranda">
-          <img src="/logo.png" alt="Gadai Sakti" className="h-8 w-auto" />
+      <nav className="mx-auto flex h-[74px] max-w-7xl items-center justify-between px-5 sm:px-6 lg:px-8">
+        <Link href="/" className="flex shrink-0 items-center" aria-label="Gadai Sakti - Beranda">
+          <img
+            src="/logo.png"
+            alt="Gadai Sakti"
+            className="block h-auto w-[180px] object-contain sm:w-[205px] lg:w-[225px] xl:w-[240px]"
+          />
         </Link>
 
         <div className="hidden items-center gap-7 lg:flex">

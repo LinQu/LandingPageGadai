@@ -10,7 +10,7 @@ export function StorefrontIllustration() {
       <div className="relative w-[78%] rounded-md border border-slate-300 bg-white shadow-xl">
         <div className="mx-auto -mt-10 h-12 w-[88%] bg-[#5b4635] [clip-path:polygon(8%_0,92%_0,100%_100%,0_100%)]" />
         <div className="border-b-[7px] border-yellow-400 bg-primary px-5 py-4 text-center">
-          <img src="/logo.png" alt="Gadai Sakti" className="mx-auto h-9 w-auto" />
+          <img src="/logo.png" alt="Gadai Sakti" className="mx-auto block h-auto w-[86%] max-w-[290px] object-contain" />
         </div>
         <div className="border-b-4 border-accent bg-accent px-3 py-1 text-center text-[10px] font-bold tracking-wide text-white">
           GADAI ELEKTRONIK &amp; MOTOR

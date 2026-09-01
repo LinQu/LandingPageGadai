@@ -36,7 +36,7 @@ export default function InternalLoginPage() {
     <main className="flex min-h-screen items-center justify-center bg-slate-100 px-5 py-12">
       <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl">
         <div className="bg-primary px-7 py-7 text-white">
-          <img src="/logo.png" alt="Gadai Sakti" className="h-8 w-auto" />
+          <img src="/logo.png" alt="Gadai Sakti" className="block h-auto w-[235px] max-w-full object-contain" />
           <div className="mt-5 flex items-center gap-2 text-sm font-semibold text-white/80"><ShieldCheck size={18} /> Area Internal</div>
           <h1 className="mt-2 text-3xl font-extrabold text-white">Login Manajemen Data</h1>
           <p className="mt-2 text-xs leading-5 text-white/65">Halaman ini terpisah dari website publik dan menggunakan sesi server berbasis MySQL.</p>

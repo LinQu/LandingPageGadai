@@ -22,7 +22,7 @@ export default async function InternalProtectedLayout({ children }: { children: 
   return (
     <div className="min-h-screen bg-slate-100 lg:grid lg:grid-cols-[250px_1fr]">
       <aside className="bg-primary p-5 text-white lg:min-h-screen">
-        <Link href="/" className="inline-block"><img src="/logo.png" alt="Gadai Sakti" className="h-8 w-auto" /></Link>
+        <Link href="/" className="inline-flex items-center"><img src="/logo.png" alt="Gadai Sakti" className="block h-auto w-[190px] max-w-full object-contain" /></Link>
         <div className="mt-7 rounded-xl border border-white/10 bg-white/5 p-4">
           <p className="text-xs text-white/50">Login sebagai</p><strong className="mt-1 block text-sm">{admin.name}</strong><span className="text-[11px] text-white/60">{admin.email}</span><span className="mt-2 inline-flex rounded-full bg-white/10 px-2 py-1 text-[10px] uppercase tracking-wide text-white/70">{admin.role}</span>
         </div>
