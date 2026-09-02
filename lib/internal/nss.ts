@@ -1,13 +1,11 @@
 import { execFile } from 'child_process'
 import https from 'https'
 import { promisify } from 'util'
-import { NextResponse } from 'next/server'
-
-export const runtime = 'nodejs'
+import { execute } from './db'
 
 const execFileAsync = promisify(execFile)
 
-function normalizeCabangResponse(raw: string): string {
+function normalizeBarangResponse(raw: string): string {
   let cleaned = raw.trim().replace(/^\uFEFF/, '')
 
   cleaned = cleaned.replace(/^(\{\s*)status\s*=\s*([^,}]+)\s*,/i, (_match, prefix, statusValue) => {
@@ -25,7 +23,7 @@ function normalizeCabangResponse(raw: string): string {
   return cleaned
 }
 
-async function fetchBranchesFromNss(): Promise<any> {
+export async function fetchFromNss(noHP: string): Promise<any> {
   const nssUrl = process.env.NSS_API_URL
   if (!nssUrl) {
     throw new Error('NSS_API_URL belum dikonfigurasi.')
@@ -34,8 +32,8 @@ async function fetchBranchesFromNss(): Promise<any> {
   const body = JSON.stringify({
     api_jsoncmonss: [
       {
-        Request: 'CABANGGADAI',
-        noHP: '820000000021379',
+        Request: 'BARANGGADAI',
+        noHP,
         tanggalAwal: '0000-00-00',
         tanggalAkhir: '0000-00-00',
         latMulai: '0.00',
@@ -45,8 +43,10 @@ async function fetchBranchesFromNss(): Promise<any> {
     ],
   })
 
+  let parsedData: any = null
+
   try {
-    const parsedData = await new Promise((resolve, reject) => {
+    parsedData = await new Promise((resolve, reject) => {
       const url = new URL(nssUrl)
       const req = https.request(
         {
@@ -69,7 +69,7 @@ async function fetchBranchesFromNss(): Promise<any> {
           })
           res.on('end', () => {
             try {
-              const cleaned = normalizeCabangResponse(data)
+              const cleaned = normalizeBarangResponse(data)
               const parsed = JSON.parse(cleaned)
               resolve(parsed)
             } catch (err: any) {
@@ -91,8 +91,6 @@ async function fetchBranchesFromNss(): Promise<any> {
       req.write(body)
       req.end()
     })
-
-    return parsedData
   } catch {
     try {
       const { stdout } = await execFileAsync('curl', [
@@ -111,21 +109,33 @@ async function fetchBranchesFromNss(): Promise<any> {
         body,
       ])
 
-      const cleaned = normalizeCabangResponse(stdout)
-      return JSON.parse(cleaned)
+      const cleaned = normalizeBarangResponse(stdout)
+      parsedData = JSON.parse(cleaned)
     } catch (curlError: any) {
-      console.error('NSS Cabang API curl error:', curlError.message)
-      throw new Error(`Gagal menghubungi API Cabang NSS: ${curlError.message}`)
+      console.error('NSS API curl error:', curlError.message)
+      throw new Error(`Gagal menghubungi API NSS: ${curlError.message}`)
     }
   }
+
+  // Jika berhasil mendapatkan data harga dari API NSS, langsung simpan / update default_price di MySQL
+  if (parsedData?.Detail && Array.isArray(parsedData.Detail) && parsedData.Detail.length > 0) {
+    const prices = parsedData.Detail
+      .map((d: any) => Number(d.hargamaxcair || 0))
+      .filter((p: number) => !isNaN(p) && p > 0)
+
+    const maxPrice = prices.length > 0 ? Math.max(...prices) : 0
+    if (maxPrice > 0) {
+      try {
+        await execute(
+          `UPDATE pawn_product_variants SET default_price = ? WHERE api_code = ? AND api_code <> '' AND api_code <> '-'`,
+          [Math.round(maxPrice), noHP]
+        )
+      } catch (dbErr: any) {
+        console.error('Auto-update default_price from NSS API error:', dbErr.message)
+      }
+    }
+  }
+
+  return parsedData
 }
 
-export async function GET() {
-  try {
-    const data = await fetchBranchesFromNss()
-    return NextResponse.json(data)
-  } catch (error: any) {
-    console.error('API Cabang Error:', error.message)
-    return NextResponse.json({ status: 'error', message: error.message, Detail: [] }, { status: 502 })
-  }
-}

@@ -357,8 +357,20 @@ export function SimulationForm({ stage }: SimulationFormProps) {
     )
   }, [selectedProduct, variantSearchQuery])
 
+  const fallbackPriceRange = useMemo(() => {
+    if (!selectedSpec) return null
+    const raw = selectedSpec.maxValuation
+    const maxCash = typeof raw === 'number' && raw > 0 ? raw : 0
+    if (maxCash <= 0) return null
+    return {
+      min: calculateEstimatedMin(maxCash),
+      max: maxCash,
+      source: 'catalog' as const,
+    }
+  }, [selectedSpec])
+
   useEffect(() => {
-    if (stage !== 'variant') {
+    if (stage !== 'variant' || !selectedNoHp) {
       setBarangEstimates([])
       setApiLoadState('idle')
       setEstimateMessage('')
@@ -372,7 +384,7 @@ export function SimulationForm({ stage }: SimulationFormProps) {
       try {
         setEstimateLoading(true)
         setApiLoadState('loading')
-        setEstimateMessage('Mengambil estimasi harga dari API barang...')
+        setEstimateMessage('Mengambil estimasi harga dari API...')
         const estimates = await getBarangEstimates(noHP)
 
         if (!isMounted) {
@@ -383,15 +395,23 @@ export function SimulationForm({ stage }: SimulationFormProps) {
         setApiLoadState('loaded')
 
         if (estimates.length === 0) {
-          setEstimateMessage('Data estimasi barang belum tersedia untuk kode ini. Menggunakan referensi katalog sementara.')
+          if (fallbackPriceRange && fallbackPriceRange.max > 0) {
+            setEstimateMessage('Kode API tidak ditemukan di server. Menggunakan harga manual dari Master Barang.')
+          } else {
+            setEstimateMessage('Data estimasi belum tersedia untuk variant ini.')
+          }
         } else {
-          setEstimateMessage('Harga yang ditampilkan adalah estimasi dan akan difilter berdasarkan cabang yang dipilih.')
+          setEstimateMessage('Memuat Harga Estimasi...')
         }
       } catch {
         if (isMounted) {
           setBarangEstimates([])
           setApiLoadState('error')
-          setEstimateMessage('Gagal mengambil estimasi dari API barang. Menggunakan referensi katalog sementara.')
+          if (fallbackPriceRange && fallbackPriceRange.max > 0) {
+            setEstimateMessage('Gagal menghubungkan. Menggunakan harga manual dari Master Barang.')
+          } else {
+            setEstimateMessage('Gagal mengambil estimasi harga.')
+          }
         }
       } finally {
         if (isMounted) {
@@ -400,49 +420,25 @@ export function SimulationForm({ stage }: SimulationFormProps) {
       }
     }
 
-    if (!selectedNoHp || !branchCode) {
-      setBarangEstimates([])
-      setApiLoadState('idle')
-      setEstimateMessage('')
-      setEstimateLoading(false)
-      return () => {
-        isMounted = false
-      }
-    }
-
     void loadBarangEstimates(selectedNoHp)
 
     return () => {
       isMounted = false
     }
-  }, [branchCode, selectedNoHp, stage])
+  }, [fallbackPriceRange, selectedNoHp, stage])
 
   const selectedBranchEstimate = useMemo(() => {
-    if (!branchCode) {
-      return undefined
-    }
-
-    return barangEstimates.find(entry => entry.kodeCabang === branchCode)
+    if (barangEstimates.length === 0) return undefined
+    if (!branchCode) return barangEstimates[0]
+    return (
+      barangEstimates.find(
+        entry => entry.kodeCabang.trim().toLowerCase() === branchCode.trim().toLowerCase()
+      ) ?? barangEstimates[0]
+    )
   }, [barangEstimates, branchCode])
 
-  const fallbackPriceRange = useMemo(() => {
-    if (!selectedSpec) {
-      return null
-    }
-
-    const maxCash = selectedSpec.maxValuation
-    return {
-      min: calculateEstimatedMin(maxCash),
-      max: maxCash,
-      source: 'catalog' as const,
-    }
-  }, [selectedSpec])
-
   const activePriceRange = useMemo(() => {
-    if (apiLoadState === 'loading' || apiLoadState === 'idle') {
-      return null
-    }
-
+    // 1. Prioritaskan harga real-time dari API NSS jika ada
     if (selectedBranchEstimate && selectedBranchEstimate.maxCash > 0) {
       return {
         min: calculateEstimatedMin(selectedBranchEstimate.maxCash),
@@ -451,8 +447,13 @@ export function SimulationForm({ stage }: SimulationFormProps) {
       }
     }
 
-    return fallbackPriceRange
-  }, [apiLoadState, fallbackPriceRange, selectedBranchEstimate])
+    // 2. Fallback ke harga manual yang diinput di Master Barang (MySQL default_price)
+    if (fallbackPriceRange && fallbackPriceRange.max > 0) {
+      return fallbackPriceRange
+    }
+
+    return null
+  }, [fallbackPriceRange, selectedBranchEstimate])
 
   const selectedLoanAmountResolved = selectedLoanAmount || activePriceRange?.max || 0
   const sewaModal = calculateSewaModal(selectedLoanAmountResolved, selectedTenor)
@@ -462,13 +463,15 @@ export function SimulationForm({ stage }: SimulationFormProps) {
     if (!activePriceRange) {
       return
     }
+    const safeMin = activePriceRange.min ?? 0
+    const safeMax = activePriceRange.max ?? 0
 
     setSelectedLoanAmount(prev => {
-      if (prev >= activePriceRange.min && prev <= activePriceRange.max) {
+      if (prev >= safeMin && prev <= safeMax) {
         return prev
       }
 
-      return activePriceRange.max
+      return safeMax
     })
   }, [activePriceRange])
 
@@ -584,6 +587,7 @@ export function SimulationForm({ stage }: SimulationFormProps) {
       adminFee: undefined,
     }))
 
+    
     setProductSearchQuery('')
     setVariantSearchQuery('')
     resetEstimateData()
@@ -657,7 +661,9 @@ export function SimulationForm({ stage }: SimulationFormProps) {
     }
   }
 
-  const selectedRangeText = activePriceRange ? `${formatCurrency(activePriceRange.min)} - ${formatCurrency(activePriceRange.max)}` : null
+  const selectedRangeText = activePriceRange
+    ? `${formatCurrency(activePriceRange.min ?? 0)} - ${formatCurrency(activePriceRange.max ?? 0)}`
+    : null
 
   if (!hydrated) {
     return <div className="rounded-2xl bg-white p-6 text-sm text-slate-500 shadow-sm ring-1 ring-black/5">Memuat simulasi...</div>
@@ -939,7 +945,7 @@ export function SimulationForm({ stage }: SimulationFormProps) {
         <div className="space-y-4 rounded-2xl border border-border bg-slate-50 p-4">
           <div>
             <h3 className="text-lg font-semibold text-primary">{selectedProduct.name}</h3>
-            <p className="text-sm text-text-muted">Pilih variant untuk memuat estimasi harga dari API.</p>
+            <p className="text-sm text-text-muted">Pilih variant untuk memuat estimasi harga.</p>
           </div>
 
           <div className="relative">
@@ -1008,42 +1014,46 @@ export function SimulationForm({ stage }: SimulationFormProps) {
 
         {estimateMessage ? <p className="text-sm text-text-muted">{estimateMessage}</p> : null}
 
-        {activePriceRange ? (
+        {activePriceRange ? (() => {
+          const priceMin = activePriceRange.min ?? 0
+          const priceMax = activePriceRange.max ?? 0
+          return (
           <div className="space-y-3 rounded-xl border border-border p-4">
             <div className="rounded-xl border border-primary/10 bg-gradient-to-br from-primary/5 to-gray-50 p-4">
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
                   <div className="text-xs uppercase tracking-wide text-text-muted">Nominal dipilih</div>
-                  <div className="mt-1 text-2xl font-bold text-primary">{formatCurrency(selectedLoanAmountResolved || activePriceRange.max)}</div>
+                  <div className="mt-1 text-2xl font-bold text-primary">{formatCurrency(selectedLoanAmountResolved || priceMax)}</div>
                 </div>
                 <div className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-primary shadow-sm">
-                  Maks. {formatCurrency(activePriceRange.max)}
+                  Maks. {formatCurrency(priceMax)}
                 </div>
               </div>
 
               <input
                 type="range"
                 min={0}
-                max={getLoanSliderStepCount(activePriceRange.min, activePriceRange.max)}
+                max={getLoanSliderStepCount(priceMin, priceMax)}
                 step={1}
                 value={getSliderStepFromLoanAmount(
-                  selectedLoanAmountResolved || activePriceRange.max,
-                  activePriceRange.min,
-                  activePriceRange.max
+                  selectedLoanAmountResolved || priceMax,
+                  priceMin,
+                  priceMax
                 )}
                 onChange={event =>
                   setSelectedLoanAmount(
-                    getLoanAmountFromSliderStep(Number(event.target.value), activePriceRange.min, activePriceRange.max)
+                    getLoanAmountFromSliderStep(Number(event.target.value), priceMin, priceMax)
                   )
                 }
                 className="mt-5 w-full cursor-pointer accent-primary"
               />
 
               <div className="mt-2 flex items-center justify-between gap-3 text-xs text-text-muted">
-                <span>{formatCurrency(activePriceRange.min)}</span>
-                <span>{formatCurrency(activePriceRange.max)}</span>
+                <span>{formatCurrency(priceMin)}</span>
+                <span>{formatCurrency(priceMax)}</span>
               </div>
             </div>
+
 
             <div className="grid gap-3 md:grid-cols-2">
               <div className="rounded-xl bg-primary/5 p-4 border border-primary/10">
@@ -1069,7 +1079,7 @@ export function SimulationForm({ stage }: SimulationFormProps) {
                 </div>
                 <div className="flex items-center justify-between gap-4">
                   <span className="text-text-muted">Hasil estimasi yang dipilih</span>
-                  <span className="text-right font-semibold text-primary">{formatCurrency(selectedLoanAmountResolved || activePriceRange.max)}</span>
+                  <span className="text-right font-semibold text-primary">{formatCurrency(selectedLoanAmountResolved || priceMax)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-4">
                   <span className="text-text-muted">Sewa modal</span>
@@ -1086,7 +1096,8 @@ export function SimulationForm({ stage }: SimulationFormProps) {
               <p className="mt-2 text-xs font-semibold text-red-600">*S&amp;K Berlaku</p>
             </div>
           </div>
-        ) : null}
+          )
+        })() : null}
       </div>
 
       <div className="flex gap-3">

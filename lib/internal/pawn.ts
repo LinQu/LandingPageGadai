@@ -29,8 +29,9 @@ export async function audit(adminId: number, entityType: string, entityId: numbe
 }
 
 export async function activeCodeIsTaken(apiCode: string, excludeId?: number) {
+  if (!apiCode) return false
   const params: unknown[] = [apiCode]
-  let sql = `SELECT id FROM pawn_product_variants WHERE api_code = ? AND status = 'active'`
+  let sql = `SELECT id FROM pawn_product_variants WHERE api_code = ? AND api_code <> '' AND status = 'active'`
   if (excludeId) { sql += ' AND id <> ?'; params.push(excludeId) }
   return (await queryRows<{ id: number }>(sql, params)).length > 0
 }

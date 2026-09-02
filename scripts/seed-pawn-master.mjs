@@ -26,7 +26,14 @@ const brandFor = (name) => {
 }
 
 const slug = (value) => String(value).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-const apiCode = (id, name) => id === 'iphone-11' && name === 'IBOX 128GB' ? 'IP_11_128GB_IBOX' : `${id}_${name}`.toUpperCase().replace(/[^A-Z0-9]+/g, '_')
+const apiCode = (id, name) => {
+  if (id === 'iphone-11') {
+    if (name === 'IBOX 64GB') return 'IP_11_64GB_IBOX'
+    if (name === 'IBOX 128GB') return 'IP_11_128GB_IBOX'
+    if (name === 'IBOX 256GB') return 'IP_11_256GB_IBOX'
+  }
+  return `${id}_${name}`.toUpperCase().replace(/[^A-Z0-9]+/g, '_')
+}
 
 const db = await mysql.createConnection({ host: process.env.DB_HOST, port: Number(process.env.DB_PORT || 3306), user: process.env.DB_USER, password: process.env.DB_PASSWORD, database: process.env.DB_NAME, charset: 'utf8mb4' })
 try {
@@ -46,9 +53,10 @@ try {
       const [[product]] = await db.query('SELECT id FROM pawn_products WHERE slug=? LIMIT 1', [itemId])
       for (const specName of specs) {
         const [existing] = await db.query('SELECT id FROM pawn_product_variants WHERE product_id=? AND name=? LIMIT 1', [product.id, specName])
-        const values = [product.id, specName, apiCode(itemId, specName), 'Dummy data simulasi; perlu divalidasi NSS sebelum produksi.', variantCount++, 'active']
-        if (existing.length) await db.execute('UPDATE pawn_product_variants SET api_code=?, internal_note=?, sort_order=?, status=? WHERE id=?', [values[2], values[3], values[4], values[5], existing[0].id])
-        else await db.execute('INSERT INTO pawn_product_variants (product_id, name, api_code, internal_note, sort_order, status) VALUES (?, ?, ?, ?, ?, ?)', values)
+        const defaultPrice = /iphone-13/i.test(itemId) ? 5000000 : /iphone-11-pro/i.test(itemId) ? 3500000 : /iphone-11/i.test(itemId) ? 2500000 : /macbook/i.test(itemId) ? 6500000 : 3000000
+        const values = [product.id, specName, apiCode(itemId, specName), defaultPrice, 'Data awal simulasi.', variantCount++, 'active']
+        if (existing.length) await db.execute('UPDATE pawn_product_variants SET api_code=?, default_price=COALESCE(default_price, ?), internal_note=?, sort_order=?, status=? WHERE id=?', [values[2], values[3], values[4], values[5], values[6], existing[0].id])
+        else await db.execute('INSERT INTO pawn_product_variants (product_id, name, api_code, default_price, internal_note, sort_order, status) VALUES (?, ?, ?, ?, ?, ?, ?)', values)
       }
     }
   }
