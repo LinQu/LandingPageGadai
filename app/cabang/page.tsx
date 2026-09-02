@@ -21,6 +21,45 @@ import type { Branch } from '@/lib/types'
 
 const ITEMS_PER_PAGE = 6
 
+type PaginationItem = number | 'ellipsis-start' | 'ellipsis-end'
+
+function getPaginationItems(currentPage: number, totalPages: number): PaginationItem[] {
+  const windowSize = 5
+
+  if (totalPages <= windowSize) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1)
+  }
+
+  const halfWindow = Math.floor(windowSize / 2)
+  let startPage = Math.max(1, currentPage - halfWindow)
+  let endPage = startPage + windowSize - 1
+
+  // Saat masih di awal, pertahankan 1-5.
+  if (currentPage <= halfWindow + 1) {
+    startPage = 1
+    endPage = windowSize
+  }
+
+  // Jika window sudah menyentuh halaman sebelum terakhir, geser ke ujung
+  // supaya jumlah tombol tetap ringkas dan halaman terakhir ikut terlihat.
+  if (endPage >= totalPages - 1) {
+    endPage = totalPages
+    startPage = Math.max(1, totalPages - windowSize + 1)
+  }
+
+  const items: PaginationItem[] = Array.from(
+    { length: endPage - startPage + 1 },
+    (_, index) => startPage + index,
+  )
+
+  // Selama halaman terakhir belum masuk window, tampilkan shortcut ke halaman terakhir.
+  if (endPage < totalPages) {
+    items.push('ellipsis-end', totalPages)
+  }
+
+  return items
+}
+
 type UserLocation = {
   latitude: number
   longitude: number
@@ -202,6 +241,10 @@ export default function CabangPage() {
   }, [filteredBranches, userLocation])
 
   const totalPages = Math.max(1, Math.ceil(sortedBranches.length / ITEMS_PER_PAGE))
+  const paginationItems = useMemo(
+    () => getPaginationItems(currentPage, totalPages),
+    [currentPage, totalPages]
+  )
   const paginatedBranches = sortedBranches.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
@@ -356,7 +399,7 @@ export default function CabangPage() {
               />
               <div
                 className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-400"
-                title="Informasi kecamatan/kelurahan terpisah belum tersedia"
+                title="Data API saat ini belum menyediakan field kecamatan/kelurahan terpisah"
               >
                 Kelurahan <ChevronDown size={13} />
               </div>
@@ -462,29 +505,44 @@ export default function CabangPage() {
                     disabled={currentPage === 1}
                     className="rounded-full border border-slate-200 px-4 py-2 text-xs font-bold text-primary disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    Sebelumnya
+                    Prev
                   </button>
-                  {Array.from({ length: totalPages }, (_, index) => index + 1).map(page => (
-                    <button
-                      key={page}
-                      type="button"
-                      onClick={() => setCurrentPage(page)}
-                      className={`h-9 min-w-9 rounded-full px-3 text-xs font-bold ${
-                        currentPage === page
-                          ? 'bg-primary text-white'
-                          : 'border border-slate-200 bg-white text-primary'
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  ))}
+                  {paginationItems.map(item => {
+                    if (typeof item !== 'number') {
+                      return (
+                        <span
+                          key={item}
+                          className="flex h-9 min-w-6 items-center justify-center px-1 text-xs font-bold text-slate-400"
+                          aria-hidden="true"
+                        >
+                          ...
+                        </span>
+                      )
+                    }
+
+                    return (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => setCurrentPage(item)}
+                        aria-current={currentPage === item ? 'page' : undefined}
+                        className={`h-9 min-w-9 rounded-full px-3 text-xs font-bold transition ${
+                          currentPage === item
+                            ? 'bg-primary text-white shadow-sm'
+                            : 'border border-slate-200 bg-white text-primary hover:border-primary/40 hover:bg-primary/5'
+                        }`}
+                      >
+                        {item}
+                      </button>
+                    )
+                  })}
                   <button
                     type="button"
                     onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
                     disabled={currentPage === totalPages}
                     className="rounded-full border border-slate-200 px-4 py-2 text-xs font-bold text-primary disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    Berikutnya
+                    Next
                   </button>
                 </div>
               ) : null}
