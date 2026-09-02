@@ -58,22 +58,29 @@ export function PawnManager() {
   const [loading, setLoading] = useState(true)
 
 
-  // ---- Derived state ----
   const categoryBrandIds = useMemo(() => {
     if (!categoryId) return new Set<number>()
-    return new Set(products.filter(p => p.category_id === Number(categoryId)).map(p => p.brand_id))
-  }, [categoryId, products])
+    const cat = categories.find(c => String(c.id) === String(categoryId)) as any
+    const fromCat = (cat?.brand_ids ? String(cat.brand_ids).split(',').map(Number) : [])
+    const fromProducts = products.filter(p => p.category_id === Number(categoryId)).map(p => p.brand_id)
+    return new Set([...fromCat, ...fromProducts])
+  }, [categoryId, categories, products])
 
   const filteredBrands = useMemo(() => {
     if (!categoryId) return brands
-    return brands.filter(b => categoryBrandIds.has(Number(b.id)))
+    const list = brands.filter(b => categoryBrandIds.has(Number(b.id)))
+    return list.length > 0 ? list : brands
   }, [brands, categoryBrandIds, categoryId])
 
   const productFormBrandOptions = useMemo(() => {
     if (!productForm.categoryId) return brands
-    const ids = new Set(products.filter(p => p.category_id === Number(productForm.categoryId)).map(p => p.brand_id))
-    return brands.filter(b => ids.has(Number(b.id)))
-  }, [brands, productForm.categoryId, products])
+    const cat = categories.find(c => String(c.id) === String(productForm.categoryId)) as any
+    const fromCat = (cat?.brand_ids ? String(cat.brand_ids).split(',').map(Number) : [])
+    const fromProducts = products.filter(p => p.category_id === Number(productForm.categoryId)).map(p => p.brand_id)
+    const allowed = new Set([...fromCat, ...fromProducts])
+    const list = brands.filter(b => allowed.has(Number(b.id)))
+    return list.length > 0 ? list : brands
+  }, [brands, productForm.categoryId, categories, products])
 
   const visible = useMemo(() => products.filter(p => {
     return (

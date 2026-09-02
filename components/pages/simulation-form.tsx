@@ -119,14 +119,20 @@ export function SimulationForm({ stage }: SimulationFormProps) {
   const [variantSearchQuery, setVariantSearchQuery] = useState('')
 
   useEffect(() => {
+    const stored = readStoredSimulation()
     if (stage === 'setup') {
-      clearStoredSimulation()
-      setSimulation({})
+      // Pertahankan pilihan cabang dan kategori sebelumnya agar tidak hilang saat kembali ke /simulasi
+      setSimulation(prev => ({
+        ...prev,
+        branch: stored.branch || prev.branch,
+        branchCode: stored.branchCode || prev.branchCode,
+        category: stored.category || prev.category,
+      }))
       setHydrated(true)
       return
     }
 
-    setSimulation(readStoredSimulation())
+    setSimulation(stored)
     setHydrated(true)
   }, [stage])
 
@@ -370,7 +376,7 @@ export function SimulationForm({ stage }: SimulationFormProps) {
   }, [selectedSpec])
 
   useEffect(() => {
-    if (stage !== 'variant' || !selectedNoHp) {
+    if (stage !== 'variant' || !selectedSpec) {
       setBarangEstimates([])
       setApiLoadState('idle')
       setEstimateMessage('')
@@ -384,33 +390,39 @@ export function SimulationForm({ stage }: SimulationFormProps) {
       try {
         setEstimateLoading(true)
         setApiLoadState('loading')
-        setEstimateMessage('Mengambil estimasi harga dari API...')
-        const estimates = await getBarangEstimates(noHP)
+        setEstimateMessage('')
 
-        if (!isMounted) {
-          return
+        const startTime = Date.now()
+        let estimates: any[] = []
+
+        if (noHP) {
+          estimates = await getBarangEstimates(noHP).catch(() => [])
         }
+
+        // Delay minimal 500ms agar customer melihat status "Memuat harga..." secara halus
+        const elapsed = Date.now() - startTime
+        if (elapsed < 500) {
+          await new Promise(resolve => setTimeout(resolve, 500 - elapsed))
+        }
+
+        if (!isMounted) return
 
         setBarangEstimates(estimates)
         setApiLoadState('loaded')
 
-        if (estimates.length === 0) {
-          if (fallbackPriceRange && fallbackPriceRange.max > 0) {
-            setEstimateMessage('Kode API tidak ditemukan di server. Menggunakan harga manual dari Master Barang.')
-          } else {
-            setEstimateMessage('Data estimasi belum tersedia untuk variant ini.')
-          }
+        if (estimates.length === 0 && (!fallbackPriceRange || fallbackPriceRange.max <= 0)) {
+          setEstimateMessage('Estimasi taksiran belum tersedia untuk variant ini.')
         } else {
-          setEstimateMessage('Memuat Harga Estimasi...')
+          setEstimateMessage('')
         }
       } catch {
         if (isMounted) {
           setBarangEstimates([])
           setApiLoadState('error')
-          if (fallbackPriceRange && fallbackPriceRange.max > 0) {
-            setEstimateMessage('Gagal menghubungkan. Menggunakan harga manual dari Master Barang.')
+          if (!fallbackPriceRange || fallbackPriceRange.max <= 0) {
+            setEstimateMessage('Estimasi taksiran belum tersedia.')
           } else {
-            setEstimateMessage('Gagal mengambil estimasi harga.')
+            setEstimateMessage('')
           }
         }
       } finally {
@@ -425,7 +437,7 @@ export function SimulationForm({ stage }: SimulationFormProps) {
     return () => {
       isMounted = false
     }
-  }, [fallbackPriceRange, selectedNoHp, stage])
+  }, [fallbackPriceRange, selectedNoHp, selectedSpec, stage])
 
   const selectedBranchEstimate = useMemo(() => {
     if (barangEstimates.length === 0) return undefined
@@ -438,7 +450,11 @@ export function SimulationForm({ stage }: SimulationFormProps) {
   }, [barangEstimates, branchCode])
 
   const activePriceRange = useMemo(() => {
-    // 1. Prioritaskan harga real-time dari API NSS jika ada
+    if (estimateLoading || apiLoadState === 'loading') {
+      return null
+    }
+
+    // 1. Prioritaskan harga real-time taksiran jika ada
     if (selectedBranchEstimate && selectedBranchEstimate.maxCash > 0) {
       return {
         min: calculateEstimatedMin(selectedBranchEstimate.maxCash),
@@ -447,13 +463,13 @@ export function SimulationForm({ stage }: SimulationFormProps) {
       }
     }
 
-    // 2. Fallback ke harga manual yang diinput di Master Barang (MySQL default_price)
+    // 2. Fallback ke harga default produk
     if (fallbackPriceRange && fallbackPriceRange.max > 0) {
       return fallbackPriceRange
     }
 
     return null
-  }, [fallbackPriceRange, selectedBranchEstimate])
+  }, [estimateLoading, apiLoadState, fallbackPriceRange, selectedBranchEstimate])
 
   const selectedLoanAmountResolved = selectedLoanAmount || activePriceRange?.max || 0
   const sewaModal = calculateSewaModal(selectedLoanAmountResolved, selectedTenor)
@@ -625,6 +641,8 @@ export function SimulationForm({ stage }: SimulationFormProps) {
 
   const handleSelectVariant = (spec: PawnCatalogSpec) => {
     resetEstimateData()
+    setEstimateLoading(true)
+    setApiLoadState('loading')
 
     updateSimulation(prev => ({
       ...prev,
@@ -982,33 +1000,33 @@ export function SimulationForm({ stage }: SimulationFormProps) {
       ) : null}
 
       <div className="rounded-2xl border border-border bg-white p-5 space-y-4">
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid grid-cols-2 gap-y-3 gap-x-4">
           <div>
-            <div className="text-xs uppercase tracking-wide text-text-muted">Cabang</div>
-            <div className="mt-1 font-semibold text-primary">{simulation.branch?.NamaCabang || '-'}</div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Cabang</div>
+            <div className="mt-0.5 font-bold text-slate-800 text-sm">{simulation.branch?.NamaCabang || '-'}</div>
           </div>
           <div>
-            <div className="text-xs uppercase tracking-wide text-text-muted">Kategori</div>
-            <div className="mt-1 font-semibold text-primary">{simulation.category?.name || '-'}</div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Kategori</div>
+            <div className="mt-0.5 font-bold text-slate-800 text-sm">{simulation.category?.name || '-'}</div>
           </div>
           <div>
-            <div className="text-xs uppercase tracking-wide text-text-muted">Brand</div>
-            <div className="mt-1 font-semibold text-primary">{simulation.brand?.name || '-'}</div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Barang</div>
+            <div className="mt-0.5 font-bold text-slate-800 text-sm">{simulation.itemName || '-'}</div>
           </div>
           <div>
-            <div className="text-xs uppercase tracking-wide text-text-muted">Produk</div>
-            <div className="mt-1 font-semibold text-primary">{simulation.itemName || '-'}</div>
-          </div>
-          <div>
-            <div className="text-xs uppercase tracking-wide text-text-muted">Variant</div>
-            <div className="mt-1 font-semibold text-primary">{simulation.specification || '-'}</div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Spesifikasi</div>
+            <div className="mt-0.5 font-bold text-slate-800 text-sm">{simulation.specification || '-'}</div>
           </div>
         </div>
 
-        <div className="rounded-xl bg-primary/5 p-4 border border-primary/10">
-          <div className="text-sm text-text-muted">Estimasi cair</div>
-          <div className="mt-1 text-3xl font-bold text-primary">
-            {selectedRangeText || (apiLoadState === 'loading' ? 'Memuat harga...' : '-')}
+        <div className="rounded-xl bg-slate-50/80 p-4 sm:p-5 border border-slate-200/80">
+          <div className="text-xs text-slate-500 font-medium">Estimasi cair</div>
+          <div className="mt-1 text-2xl sm:text-3xl font-extrabold text-primary">
+            {estimateLoading || apiLoadState === 'loading' ? (
+              <span className="text-primary font-bold">Memuat harga...</span>
+            ) : (
+              selectedRangeText || '-'
+            )}
           </div>
         </div>
 

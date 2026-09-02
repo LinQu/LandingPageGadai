@@ -23,7 +23,23 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     `UPDATE pawn_brands SET name = ?, slug = ?, logo_url = ?, sort_order = ?, status = ? WHERE id = ?`,
     [v.name, v.slug, v.image, v.sortOrder, v.status, id]
   )
-  await audit(admin.id, 'pawn_brand', id, 'update', existing, { id, ...v })
+
+  // Sync selected categories
+  if (Array.isArray(body.selectedCategoryIds)) {
+    const selectedCategoryIds: number[] = body.selectedCategoryIds
+      .map(Number)
+      .filter((cid: number) => Number.isSafeInteger(cid) && cid > 0)
+
+    await execute(`DELETE FROM pawn_category_brands WHERE brand_id = ?`, [id])
+    for (const cid of selectedCategoryIds) {
+      await execute(
+        `INSERT IGNORE INTO pawn_category_brands (category_id, brand_id) VALUES (?, ?)`,
+        [cid, id]
+      ).catch(() => {})
+    }
+  }
+
+  await audit(admin.id, 'pawn_brand', id, 'update', existing, { id, ...v, selectedCategoryIds: body.selectedCategoryIds })
   return NextResponse.json({ ok: true })
 }
 

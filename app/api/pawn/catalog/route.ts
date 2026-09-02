@@ -77,12 +77,23 @@ export async function GET() {
       variantsByProduct.set(v.product_id, list)
     }
 
+    const categoryBrandLinks = await queryRows<{ category_id: number; brand_id: number }>(
+      `SELECT category_id, brand_id FROM pawn_category_brands`
+    )
+    const categoryBrandMap = new Map<number, Set<number>>()
+    for (const link of categoryBrandLinks) {
+      const set = categoryBrandMap.get(link.category_id) || new Set<number>()
+      set.add(link.brand_id)
+      categoryBrandMap.set(link.category_id, set)
+    }
+
     const catalog = categories.map(cat => {
       // Find all products in this category
       const categoryProducts = products.filter(p => p.category_id === cat.id)
 
-      // Find all unique brands with products in this category
-      const brandIds = Array.from(new Set(categoryProducts.map(p => p.brand_id)))
+      // Find all unique brands linked to this category (via pawn_category_brands or products)
+      const linkedBrandIds = categoryBrandMap.get(cat.id) || new Set<number>()
+      const brandIds = Array.from(new Set([...Array.from(linkedBrandIds), ...categoryProducts.map(p => p.brand_id)]))
       const categoryBrands = brandIds
         .map(bid => brandsMap.get(bid))
         .filter((b): b is DbBrand => Boolean(b))

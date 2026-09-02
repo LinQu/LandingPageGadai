@@ -63,22 +63,36 @@ export function BranchSelector({ branches, onSelectBranch, selectedBranch, helpe
           {helperText ? <p className="text-sm text-slate-500">{helperText}</p> : null}
 
           <div className="max-h-72 space-y-2 overflow-auto pr-1">
-            {filteredBranches.map(branch => (
-              <button
-                key={branch.id}
-                type="button"
-                onClick={() => {
-                  onSelectBranch(branch)
-                  setIsOpen(false)
-                }}
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-left transition hover:border-accent hover:bg-accent/5"
-              >
-                <div className="font-semibold text-primary">{branch.NamaCabang}</div>
-                <div className="mt-1 text-xs text-slate-500">
-                  {branch.Kota} • {branch.Alamat}
-                </div>
-              </button>
-            ))}
+            {filteredBranches.map(branch => {
+              const isSelected = selectedBranch?.id === branch.id
+              return (
+                <button
+                  key={branch.id}
+                  type="button"
+                  onClick={() => {
+                    onSelectBranch(branch)
+                    setIsOpen(false)
+                  }}
+                  className={`w-full rounded-xl border px-4 py-3 text-left transition flex items-center justify-between ${
+                    isSelected
+                      ? 'border-accent bg-accent/5 ring-1 ring-accent/30'
+                      : 'border-slate-200 bg-white hover:border-accent hover:bg-accent/5'
+                  }`}
+                >
+                  <div>
+                    <div className="font-semibold text-primary">{branch.NamaCabang}</div>
+                    <div className="mt-1 text-xs text-slate-500">
+                      {branch.Kota} • {branch.Alamat}
+                    </div>
+                  </div>
+                  {isSelected ? (
+                    <span className="rounded-full bg-accent/10 px-2.5 py-1 text-xs font-bold text-accent">
+                      ✓ Terpilih
+                    </span>
+                  ) : null}
+                </button>
+              )
+            })}
 
             {filteredBranches.length === 0 ? (
               <div className="rounded-xl border border-dashed border-slate-200 px-4 py-6 text-center text-sm text-slate-500">
