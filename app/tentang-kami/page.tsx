@@ -1,9 +1,9 @@
 import Link from 'next/link'
-import { BarChart3, Bolt, FileText, ShieldCheck, Store, Users, BadgeCheck } from 'lucide-react'
+import { BarChart3, Bolt, FileText, ShieldCheck, Store, BadgeCheck } from 'lucide-react'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { PawnCta } from '@/components/company/pawn-cta'
-import { StorefrontIllustration } from '@/components/company/storefront-illustration'
+import { AboutOverview } from '@/components/company/about-overview'
 import { ArchivePreview } from '@/components/company/archive-preview'
 
 const reasons = [
@@ -25,39 +25,10 @@ export default function TentangKamiPage() {
     <>
       <Header />
       <main className="bg-white">
-        <section className="py-10 md:py-14">
-          <div className="mx-auto grid max-w-7xl items-center gap-8 px-5 sm:px-6 lg:grid-cols-[1fr_0.95fr] lg:px-8">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-accent">Tentang Gadai Sakti</p>
-              <h1 className="mt-2 max-w-2xl text-4xl font-extrabold leading-[1.08] text-primary md:text-5xl">Solusi Dana Cepat dengan Jaminan Barang Elektronik dan Motor</h1>
-              <p className="mt-5 max-w-2xl text-sm leading-7 text-text-muted">Gadai Sakti hadir sebagai solusi keuangan berbasis gadai untuk membantu masyarakat mendapatkan dana dengan proses yang mudah dipahami. Kami mengutamakan transparansi, keamanan barang jaminan, dan layanan yang responsif di cabang.</p>
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-text-muted">Komitmen kami adalah membangun pengalaman gadai yang praktis dan bertanggung jawab, dengan informasi taksiran dan ketentuan yang disampaikan secara jelas sebelum transaksi dilanjutkan.</p>
-              <div className="mt-5 inline-flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
-                <span className="text-xl font-extrabold text-accent">OJK</span>
-                <span className="text-[11px] leading-4 text-text-muted">Informasi legalitas dan nomor izin dapat ditempatkan di sini sesuai data resmi perusahaan.</span>
-              </div>
-            </div>
-            <StorefrontIllustration />
-          </div>
-
-          <div className="mx-auto mt-8 max-w-7xl px-5 sm:px-6 lg:px-8">
-            <div className="grid overflow-hidden rounded-xl bg-primary text-white md:grid-cols-3">
-              {[
-                { icon: Store, value: '20+', label: 'Cabang Aktif' },
-                { icon: BadgeCheck, value: '20+', label: 'Rating / Cabang Dinilai' },
-                { icon: Users, value: '99,999+', label: 'Nasabah Dilayani' },
-              ].map(({ icon: Icon, value, label }, index) => (
-                <div key={label} className={`flex items-center justify-center gap-4 px-6 py-5 ${index ? 'border-t border-white/15 md:border-l md:border-t-0' : ''}`}>
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent"><Icon size={24} /></div>
-                  <div><strong className="block text-3xl font-extrabold">{value}</strong><span className="text-xs text-white/70">{label}</span></div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        <AboutOverview />
 
         <section className="border-y border-slate-100 bg-slate-50/50 py-10 md:py-14">
-          <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+          <div className="site-container">
             <div className="text-center"><h2 className="text-3xl font-extrabold text-primary">Mengapa <span className="border-b-2 border-accent pb-1">Memilih</span> Kami?</h2></div>
             <div className="mt-9 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {reasons.map(({ icon: Icon, title, text }) => (
@@ -84,7 +55,7 @@ export default function TentangKamiPage() {
         </section>
 
         <section className="py-10 md:py-14">
-          <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+          <div className="site-container">
             <div className="flex items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-accent">Publikasi</p><h2 className="mt-1 text-3xl font-extrabold text-primary">Arsip</h2></div><Link href="/arsip" className="text-sm font-bold text-primary hover:text-accent">Lihat semua arsip</Link></div>
             <ArchivePreview />
             <div className="mt-10"><PawnCta /></div>

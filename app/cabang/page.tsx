@@ -298,7 +298,7 @@ export default function CabangPage() {
       <Header />
       <main className="min-h-screen bg-white">
         <section className="border-b border-slate-200 bg-[#f4f6fb]">
-          <div className="mx-auto grid max-w-7xl items-center gap-8 px-5 py-12 sm:px-6 md:grid-cols-[1.05fr_0.95fr] md:py-16 lg:px-8">
+          <div className="site-container grid items-center gap-8 py-12 md:grid-cols-[1.05fr_0.95fr] md:py-16">
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
               <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-accent">
                 Lokasi Cabang
@@ -366,7 +366,7 @@ export default function CabangPage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-5 py-8 sm:px-6 lg:px-8">
+        <section className="site-container py-8">
           <div className="mb-7">
             <p className="mb-2 text-xs font-semibold text-slate-500">Pilih Wilayah Pencarian</p>
             <div className="flex flex-wrap gap-2">

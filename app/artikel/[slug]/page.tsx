@@ -58,7 +58,7 @@ export default function ArtikelDetailPage({ params }: { params: Promise<{ slug: 
       <Header />
       <main className="bg-white">
         <article>
-          <div className="mx-auto max-w-7xl px-5 pb-10 pt-7 sm:px-6 lg:px-8">
+          <div className="site-container pb-10 pt-7">
             <nav className="flex flex-wrap items-center gap-1 text-[11px] text-slate-500">
               <Link href="/" className="hover:text-primary">Home</Link><ChevronRight size={12} />
               <Link href="/artikel" className="hover:text-primary">Artikel</Link><ChevronRight size={12} />
@@ -82,7 +82,7 @@ export default function ArtikelDetailPage({ params }: { params: Promise<{ slug: 
           </div>
 
           <div className="border-y border-slate-100 bg-slate-50/70 py-10">
-            <div className="mx-auto grid max-w-7xl gap-7 px-5 sm:px-6 lg:grid-cols-[260px_1fr] lg:px-8">
+            <div className="site-container grid gap-7 lg:grid-cols-[260px_1fr]">
               <aside className="h-fit rounded-xl border border-slate-200 bg-white p-5 lg:sticky lg:top-24">
                 <h2 className="flex items-center gap-2 text-base font-bold text-primary"><Lightbulb size={18} className="text-accent" /> Daftar Isi</h2>
                 <ol className="mt-4 space-y-3 text-xs leading-5 text-text-muted">
@@ -111,7 +111,7 @@ export default function ArtikelDetailPage({ params }: { params: Promise<{ slug: 
             </div>
           </div>
 
-          <div className="mx-auto max-w-7xl px-5 py-10 sm:px-6 lg:px-8">
+          <div className="site-container py-10">
             <div className="grid gap-4 md:grid-cols-3">
               {[
                 { icon: CheckCircle2, title: 'Proses jelas', text: 'Pahami nilai taksiran dan biaya sebelum transaksi dilanjutkan.' },

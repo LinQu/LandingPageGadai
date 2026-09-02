@@ -148,7 +148,7 @@ export function BranchLocatorSection() {
 
   return (
     <section id="lokasi-cabang" className="bg-white py-14 sm:py-16">
-      <div className="mx-auto grid max-w-7xl items-center gap-10 px-5 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
+      <div className="site-container grid items-center gap-10 lg:grid-cols-[0.9fr_1.1fr]">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-accent">Lokasi Cabang</p>
           <h2 className="mt-3 max-w-xl text-3xl font-bold leading-tight text-primary sm:text-4xl lg:text-[44px]">

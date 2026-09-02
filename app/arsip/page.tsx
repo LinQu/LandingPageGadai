@@ -33,7 +33,7 @@ export default function ArsipPage() {
     <>
       <Header />
       <main className="min-h-screen bg-white py-10 md:py-14">
-        <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+        <div className="site-container">
           <div className="text-center">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-accent">Dokumen Perusahaan</p>
             <h1 className="mt-2 text-4xl font-extrabold text-primary">Arsip</h1>

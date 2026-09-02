@@ -15,7 +15,7 @@ export default async function ApplyCareerPage({ params }: { params: Promise<{ sl
       <main className="bg-white">
         <CareerHero />
         <section className="py-10 md:py-14">
-          <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+          <div className="site-container">
             <div className="text-center"><p className="text-xs font-bold uppercase tracking-[0.18em] text-accent">Lamaran: {job.title}</p><h2 className="mt-2 text-4xl font-extrabold text-primary md:text-5xl">Formulir Data Diri</h2></div>
             <div className="mt-8"><ApplicationForm slug={job.slug} jobTitle={job.title} /></div>
           </div>

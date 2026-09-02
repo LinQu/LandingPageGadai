@@ -9,7 +9,7 @@ export default function SimulasiPage() {
     <>
       <Header />
       <main className="min-h-screen bg-[#f7f8fb] py-10 sm:py-12">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="site-container">
           <SimulationForm stage="setup" />
         </div>
       </main>

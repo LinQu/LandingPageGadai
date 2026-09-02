@@ -135,7 +135,7 @@ export function ProcessSection() {
   return (
     <section className="relative overflow-hidden bg-primary py-14 text-white sm:py-16">
       <div className="absolute inset-0 opacity-[0.06] [background-image:radial-gradient(circle_at_30%_30%,white_0,transparent_28%),radial-gradient(circle_at_75%_70%,white_0,transparent_28%)]" />
-      <div className="relative mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+      <div className="site-container relative">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -211,7 +211,7 @@ export function TestimonialsSection() {
 
   return (
     <section className="bg-[#f8f9fb] py-14 sm:py-16">
-      <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+      <div className="site-container">
         <div className="text-center">
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-accent">Testimoni Nasabah</p>
           <h2 className="mt-2 text-3xl font-bold text-primary sm:text-4xl">Dipercaya oleh Nasabah Gadai Sakti</h2>

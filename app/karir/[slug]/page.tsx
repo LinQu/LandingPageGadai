@@ -22,7 +22,7 @@ export default async function CareerDetailPage({ params }: { params: Promise<{ s
       <main className="bg-white">
         <CareerHero />
         <section className="py-10 md:py-14">
-          <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+          <div className="site-container">
             <h2 className="text-4xl font-extrabold text-primary md:text-5xl">{job.title}</h2>
             <div className="mt-7 grid gap-7 lg:grid-cols-[1.8fr_0.9fr]">
               <article className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">

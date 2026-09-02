@@ -1276,3 +1276,30 @@ body {
     transition: none !important;
   }
 }
+
+/* Shared public layout width: aligns public pages, sections, header, and footer.
+   Homepage hero keeps its own full-bleed responsive layout.
+   Desktop is intentionally inset so content feels spacious without leaving excessive empty sides. */
+.site-container {
+  width: calc(100% - 2.25rem);
+  max-width: 1560px;
+  margin-inline: auto;
+}
+
+@media (min-width: 640px) {
+  .site-container {
+    width: calc(100% - 3rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .site-container {
+    width: 88%;
+  }
+}
+
+@media (min-width: 1536px) {
+  .site-container {
+    width: 86%;
+  }
+}

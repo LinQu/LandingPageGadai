@@ -34,7 +34,8 @@ export default function BookingSuccessPage({ params }: { params: { bookingNumber
     <>
       <Header />
       <main className="min-h-screen bg-gradient-to-b from-green-50 to-bg-light py-12">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="site-container">
+          <div className="mx-auto max-w-2xl">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -162,6 +163,7 @@ export default function BookingSuccessPage({ params }: { params: { bookingNumber
               Kembali ke Beranda
             </Link>
           </motion.div>
+          </div>
         </div>
       </main>
       <Footer />

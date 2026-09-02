@@ -20,7 +20,7 @@ export function CategoriesSection() {
   return (
     <section className="relative overflow-hidden bg-primary py-14 text-white sm:py-16">
       <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(135deg,transparent_0%,transparent_48%,white_49%,transparent_50%,transparent_100%)] [background-size:180px_180px]" />
-      <div className="relative mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+      <div className="site-container relative">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}

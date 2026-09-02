@@ -32,7 +32,7 @@ export function FAQSection() {
 
   return (
     <section id="faq" className="bg-white py-14 sm:py-16">
-      <div className="mx-auto grid max-w-7xl gap-10 px-5 sm:px-6 lg:grid-cols-[0.75fr_1.25fr] lg:px-8">
+      <div className="site-container grid gap-10 lg:grid-cols-[0.75fr_1.25fr]">
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -138,7 +138,7 @@ export function ArticlesSection() {
 
   return (
     <section className="bg-bg-light py-16">
-      <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+      <div className="site-container">
         <div className="mb-8 flex items-end justify-between gap-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-accent">Artikel & Tips</p>
