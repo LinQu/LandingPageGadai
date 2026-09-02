@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "internal:create-admin": "node scripts/create-admin.mjs"
+    "internal:create-admin": "node scripts/create-admin.mjs",
+    "db:migrate": "node --env-file=.env.local scripts/migrate.mjs",
+    "db:seed": "node --env-file=.env.local scripts/seed-pawn-master.mjs",
+    "db:create-admin": "node --env-file=.env.local scripts/create-admin.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",

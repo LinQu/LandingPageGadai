@@ -1,15 +1,43 @@
 'use client'
 
-import { FormEvent, useEffect, useMemo, useState } from 'react'
-import { Edit3, Plus, Search, TestTube2, X } from 'lucide-react'
+import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import { ChevronDown, ChevronUp, ChevronsUpDown, Edit3, Plus, Search, X } from 'lucide-react'
 
+// ------- Types -------
 type Status = 'active' | 'inactive'
 type Named = { id: number; name: string; status: Status }
-type Product = Named & { slug: string; category_id: number; brand_id: number; category_name: string; brand_name: string; variant_count: number; sort_order: number; description?: string; search_keywords?: string; image_url?: string }
-type Variant = { id: number; product_id: number; name: string; api_code: string; default_price?: number | null; internal_note?: string; sort_order: number; status: Status }
+type Product = Named & {
+  slug: string
+  category_id: number
+  brand_id: number
+  category_name: string
+  brand_name: string
+  variant_count: number
+  sort_order: number
+  description?: string
+  search_keywords?: string
+  image_url?: string
+}
+type Variant = {
+  id: number
+  product_id: number
+  name: string
+  api_code: string
+  default_price?: number | null
+  internal_note?: string
+  sort_order: number
+  status: Status
+}
 
-const emptyProduct = () => ({ categoryId: '', brandId: '', name: '', slug: '', description: '', searchKeywords: '', imageUrl: '', sortOrder: 0, status: 'active' as Status })
-const emptyVariant = (productId = '') => ({ productId, name: '', apiCode: '', defaultPrice: '', internalNote: '', sortOrder: 0, status: 'active' as Status, overrideActiveApiCode: false })
+// Helpers
+const emptyProduct = () => ({
+  categoryId: '', brandId: '', name: '', slug: '', description: '',
+  searchKeywords: '', imageUrl: '', sortOrder: 0, status: 'active' as Status,
+})
+const emptyVariant = (productId = '') => ({
+  productId, name: '', apiCode: '', defaultPrice: '', internalNote: '',
+  sortOrder: 0, status: 'active' as Status, overrideActiveApiCode: false,
+})
 
 export function PawnManager() {
   const [categories, setCategories] = useState<Named[]>([])
@@ -17,10 +45,9 @@ export function PawnManager() {
   const [products, setProducts] = useState<Product[]>([])
   const [selected, setSelected] = useState<Product | null>(null)
   const [variants, setVariants] = useState<Variant[]>([])
-  const [query, setQuery] = useState('')
   const [categoryId, setCategoryId] = useState('')
   const [brandId, setBrandId] = useState('')
-  const [status, setStatus] = useState<'all' | Status>('active')
+  const [filterStatus, setFilterStatus] = useState<'all' | Status>('active')
   const [productForm, setProductForm] = useState<any>(emptyProduct)
   const [variantForm, setVariantForm] = useState<any>(emptyVariant)
   const [editingProductId, setEditingProductId] = useState<number | null>(null)
@@ -30,6 +57,8 @@ export function PawnManager() {
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(true)
 
+
+  // ---- Derived state ----
   const categoryBrandIds = useMemo(() => {
     if (!categoryId) return new Set<number>()
     return new Set(products.filter(p => p.category_id === Number(categoryId)).map(p => p.brand_id))
@@ -37,18 +66,31 @@ export function PawnManager() {
 
   const filteredBrands = useMemo(() => {
     if (!categoryId) return brands
-    return brands.filter(brand => categoryBrandIds.has(Number(brand.id)))
+    return brands.filter(b => categoryBrandIds.has(Number(b.id)))
   }, [brands, categoryBrandIds, categoryId])
 
   const productFormBrandOptions = useMemo(() => {
     if (!productForm.categoryId) return brands
-    const categoryProductBrandIds = new Set(products.filter(p => p.category_id === Number(productForm.categoryId)).map(p => p.brand_id))
-    return brands.filter(brand => categoryProductBrandIds.has(Number(brand.id)))
+    const ids = new Set(products.filter(p => p.category_id === Number(productForm.categoryId)).map(p => p.brand_id))
+    return brands.filter(b => ids.has(Number(b.id)))
   }, [brands, productForm.categoryId, products])
 
+  const visible = useMemo(() => products.filter(p => {
+    return (
+      (!categoryId || p.category_id === Number(categoryId)) &&
+      (!brandId || p.brand_id === Number(brandId)) &&
+      (filterStatus === 'all' || p.status === filterStatus)
+    )
+  }), [products, categoryId, brandId, filterStatus])
+
+  // ---- Data load ----
   async function load() {
     setLoading(true)
-    const [c, b, p] = await Promise.all(['categories', 'brands', 'products'].map(x => fetch(`/api/internal/pawn/${x}`, { cache: 'no-store' }).then(r => r.json())))
+    const [c, b, p] = await Promise.all(
+      ['categories', 'brands', 'products'].map(x =>
+        fetch(`/api/internal/pawn/${x}`, { cache: 'no-store' }).then(r => r.json())
+      )
+    )
     setCategories(c.data || [])
     setBrands(b.data || [])
     setProducts(p.data || [])
@@ -59,23 +101,18 @@ export function PawnManager() {
 
   useEffect(() => {
     if (!categoryId) return
-    const validBrandExists = filteredBrands.some(brand => String(brand.id) === String(brandId))
-    if (brandId && !validBrandExists) setBrandId('')
+    const valid = filteredBrands.some(b => String(b.id) === String(brandId))
+    if (brandId && !valid) setBrandId('')
   }, [brandId, categoryId, filteredBrands])
 
+  // close detail on filter change
   useEffect(() => {
-    if (selected) closeSelectedDetail()
+    if (selected) closeDetail()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryId, brandId])
 
-  const visible = useMemo(() => products.filter(p => {
-    const q = query.trim().toLowerCase()
-    return (!q || [p.name, p.slug, p.brand_name, p.category_name].some(x => x.toLowerCase().includes(q))) &&
-      (!categoryId || p.category_id === Number(categoryId)) &&
-      (!brandId || p.brand_id === Number(brandId)) &&
-      (status === 'all' || p.status === status)
-  }), [products, query, categoryId, brandId, status])
-
-  function closeSelectedDetail() {
+  // ---- Detail helpers ----
+  function closeDetail() {
     setSelected(null)
     setVariants([])
     setShowVariantForm(false)
@@ -83,54 +120,44 @@ export function PawnManager() {
     setVariantForm(emptyVariant())
   }
 
-  async function select(p: Product) {
-    if (selected?.id === p.id) {
-      closeSelectedDetail()
-      return
-    }
-
+  const selectProduct = useCallback(async (p: Product) => {
+    if (selected?.id === p.id) { closeDetail(); return }
     setSelected(p)
     setShowVariantForm(false)
     setEditingVariantId(null)
     setVariantForm(emptyVariant(String(p.id)))
-    const response = await fetch(`/api/internal/pawn/products/${p.id}`, { cache: 'no-store' }).then(r => r.json())
-    setVariants(response.data?.variants || [])
-  }
+    const res = await fetch(`/api/internal/pawn/products/${p.id}`, { cache: 'no-store' }).then(r => r.json())
+    setVariants(res.data?.variants || [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected])
 
   function editProduct(p: Product) {
     setEditingProductId(p.id)
     setProductForm({
-      categoryId: String(p.category_id),
-      brandId: String(p.brand_id),
-      name: p.name,
-      slug: p.slug,
-      description: p.description || '',
-      searchKeywords: p.search_keywords || '',
-      imageUrl: p.image_url || '',
-      sortOrder: p.sort_order,
-      status: p.status,
+      categoryId: String(p.category_id), brandId: String(p.brand_id),
+      name: p.name, slug: p.slug, description: p.description || '',
+      searchKeywords: p.search_keywords || '', imageUrl: p.image_url || '',
+      sortOrder: p.sort_order, status: p.status,
     })
     setShowProductForm(true)
   }
 
+  // ---- Form saves ----
   async function saveProduct(e: FormEvent) {
     e.preventDefault()
-    const response = await fetch(`/api/internal/pawn/products${editingProductId ? `/${editingProductId}` : ''}`, {
+    const res = await fetch(`/api/internal/pawn/products${editingProductId ? `/${editingProductId}` : ''}`, {
       method: editingProductId ? 'PATCH' : 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(productForm),
     })
-    const data = await response.json()
-    setMessage(response.ok ? 'Produk berhasil disimpan.' : data.error || 'Gagal menyimpan produk.')
-    if (response.ok) {
-      setShowProductForm(false)
-      await load()
-    }
+    const data = await res.json()
+    setMessage(res.ok ? 'Produk berhasil disimpan.' : data.error || 'Gagal menyimpan produk.')
+    if (res.ok) { setShowProductForm(false); await load() }
   }
 
   async function saveVariant(e: FormEvent) {
     e.preventDefault()
-    const response = await fetch(`/api/internal/pawn/variants${editingVariantId ? `/${editingVariantId}` : ''}`, {
+    const res = await fetch(`/api/internal/pawn/variants${editingVariantId ? `/${editingVariantId}` : ''}`, {
       method: editingVariantId ? 'PATCH' : 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -138,54 +165,100 @@ export function PawnManager() {
         defaultPrice: variantForm.defaultPrice === '' ? null : Number(variantForm.defaultPrice),
       }),
     })
-    const data = await response.json()
-    setMessage(response.ok ? 'Variant berhasil disimpan.' : data.error || 'Gagal menyimpan variant.')
-    if (response.ok && selected) {
+    const data = await res.json()
+    setMessage(res.ok ? 'Variant berhasil disimpan.' : data.error || 'Gagal menyimpan variant.')
+    if (res.ok && selected) {
       setShowVariantForm(false)
       setEditingVariantId(null)
-      await select(selected)
+      await selectProduct(selected)
       await load()
     }
   }
 
-  async function testApi(apiCode: string) {
-    const response = await fetch('/api/internal/pawn/variants/test-api', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ apiCode }),
+  // ---- Pure-React search + pagination (no jQuery conflict) ----
+  const PAGE_SIZE_PRODUCT = 10
+  const PAGE_SIZE_VARIANT = 10
+
+  const [productQuery, setProductQuery] = useState('')
+  const [productPage, setProductPage] = useState(1)
+  const [variantQuery, setVariantQuery] = useState('')
+  const [variantPage, setVariantPage] = useState(1)
+  const [productSort, setProductSort] = useState<{ col: number; asc: boolean }>({ col: 0, asc: true })
+  const [variantSort, setVariantSort] = useState<{ col: number; asc: boolean }>({ col: 0, asc: true })
+
+  // Reset halaman saat filter/data berubah
+  useEffect(() => { setProductPage(1) }, [visible, productQuery, productSort])
+  useEffect(() => { setVariantPage(1) }, [variants, variantQuery, variantSort])
+
+  const sortedFilteredProducts = useMemo(() => {
+    const q = productQuery.trim().toLowerCase()
+    let rows = q
+      ? visible.filter(p => [p.name, p.brand_name, p.category_name, String(p.variant_count), p.status].some(v => v.toLowerCase().includes(q)))
+      : [...visible]
+
+    rows.sort((a, b) => {
+      const cols = [a.name, a.brand_name, a.category_name, String(a.variant_count), a.status] as string[]
+      const colsB = [b.name, b.brand_name, b.category_name, String(b.variant_count), b.status] as string[]
+      const v = cols[productSort.col]?.localeCompare(colsB[productSort.col] ?? '') ?? 0
+      return productSort.asc ? v : -v
     })
-    const data = await response.json()
-    setMessage(response.ok ? (data.success ? `Valid: ${data.data.branch.name}; maksimal cair Rp${Number(data.data.maxCash).toLocaleString('id-ID')}` : data.message || 'API code tidak valid.') : (data.error || 'Test API gagal.'))
+    return rows
+  }, [visible, productQuery, productSort])
+
+  const productTotalPages = Math.max(1, Math.ceil(sortedFilteredProducts.length / PAGE_SIZE_PRODUCT))
+  const productPageSafe = Math.min(productPage, productTotalPages)
+  const productPageRows = sortedFilteredProducts.slice((productPageSafe - 1) * PAGE_SIZE_PRODUCT, productPageSafe * PAGE_SIZE_PRODUCT)
+
+  const sortedFilteredVariants = useMemo(() => {
+    const q = variantQuery.trim().toLowerCase()
+    let rows = q
+      ? variants.filter(v => [v.name, v.api_code, String(v.default_price ?? ''), v.status].some(x => x.toLowerCase().includes(q)))
+      : [...variants]
+
+    rows.sort((a, b) => {
+      const cols = [a.name, a.api_code, String(a.default_price ?? ''), a.status] as string[]
+      const colsB = [b.name, b.api_code, String(b.default_price ?? ''), b.status] as string[]
+      const v = cols[variantSort.col]?.localeCompare(colsB[variantSort.col] ?? '') ?? 0
+      return variantSort.asc ? v : -v
+    })
+    return rows
+  }, [variants, variantQuery, variantSort])
+
+  const variantTotalPages = Math.max(1, Math.ceil(sortedFilteredVariants.length / PAGE_SIZE_VARIANT))
+  const variantPageSafe = Math.min(variantPage, variantTotalPages)
+  const variantPageRows = sortedFilteredVariants.slice((variantPageSafe - 1) * PAGE_SIZE_VARIANT, variantPageSafe * PAGE_SIZE_VARIANT)
+
+  function toggleProductSort(col: number) {
+    setProductSort(prev => prev.col === col ? { col, asc: !prev.asc } : { col, asc: true })
+  }
+  function toggleVariantSort(col: number) {
+    setVariantSort(prev => prev.col === col ? { col, asc: !prev.asc } : { col, asc: true })
   }
 
+
+  // ---- Render ----
   return (
     <div>
       <p className="text-xs font-bold uppercase tracking-[.18em] text-accent">Internal</p>
       <h1 className="mt-2 text-3xl font-extrabold text-primary">Master Barang Gadai</h1>
 
+      {/* Top bar */}
       <div className="mt-7 flex flex-wrap items-center gap-3">
         <button
-          onClick={() => {
-            setEditingProductId(null)
-            setProductForm(emptyProduct())
-            setShowProductForm(true)
-          }}
+          onClick={() => { setEditingProductId(null); setProductForm(emptyProduct()); setShowProductForm(true) }}
           className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-bold text-white"
         >
-          <Plus size={17} />Tambah Produk
+          <Plus size={17} /> Tambah Produk
         </button>
-        <label className="relative ml-auto block w-full sm:w-80">
-          <Search className="absolute left-3 top-3 text-slate-400" size={17} />
-          <input value={query} onChange={e => setQuery(e.target.value)} className="input-internal pl-10" placeholder="Cari produk..." />
-        </label>
       </div>
 
+      {/* Filters */}
       <div className="mt-4 flex flex-wrap gap-3">
-        <Select label="Kategori" value={categoryId} setValue={v => { setCategoryId(v); if (selected) closeSelectedDetail() }} rows={categories} />
-        <Select label="Brand" value={brandId} setValue={v => { setBrandId(v); if (selected) closeSelectedDetail() }} rows={filteredBrands} />
+        <Select label="Kategori" value={categoryId} setValue={v => { setCategoryId(v); if (selected) closeDetail() }} rows={categories} />
+        <Select label="Brand" value={brandId} setValue={v => { setBrandId(v); if (selected) closeDetail() }} rows={filteredBrands} />
         <label className="flex items-center gap-2 text-sm font-semibold text-slate-600">
           Status
-          <select value={status} onChange={e => setStatus(e.target.value as 'all' | Status)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-primary">
+          <select value={filterStatus} onChange={e => setFilterStatus(e.target.value as 'all' | Status)} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-primary">
             <option value="all">Semua</option>
             <option value="active">Aktif</option>
             <option value="inactive">Inactive</option>
@@ -195,112 +268,249 @@ export function PawnManager() {
 
       {message && <p className="mt-4 rounded-lg bg-slate-100 px-4 py-3 text-sm text-primary">{message}</p>}
 
+      {/* ── Tabel Produk (React search + sort + pagination) ── */}
       <section className="mt-5 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-              <tr>
-                <th className="px-5 py-3">Produk</th>
-                <th className="px-5 py-3">Brand</th>
-                <th className="px-5 py-3">Kategori</th>
-                <th className="px-5 py-3">Variant</th>
-                <th className="px-5 py-3">Status</th>
-                <th className="px-5 py-3 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {visible.map(p => (
-                <tr key={p.id} className={selected?.id === p.id ? 'bg-orange-50/40' : ''}>
-                  <td className="px-5 py-4 font-semibold text-primary">{p.name}</td>
-                  <td className="px-5 py-4">{p.brand_name}</td>
-                  <td className="px-5 py-4">{p.category_name}</td>
-                  <td className="px-5 py-4">{p.variant_count}</td>
-                  <td className="px-5 py-4"><Badge status={p.status} /></td>
-                  <td className="px-5 py-4 text-right">
-                    <button onClick={() => select(p)} className="mr-2 text-sm font-bold text-accent">Detail</button>
-                    <span className="text-slate-300">/</span>
-                    <button onClick={() => editProduct(p)} className="ml-2 text-sm font-bold text-primary">Edit</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {/* Search bar */}
+        <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3">
+          <Search size={16} className="shrink-0 text-slate-400" />
+          <input
+            type="text"
+            value={productQuery}
+            onChange={e => setProductQuery(e.target.value)}
+            placeholder="Cari nama produk, brand, kategori…"
+            className="min-w-0 flex-1 bg-transparent py-1 text-sm text-primary outline-none placeholder:text-slate-400"
+          />
+          {productQuery && (
+            <button onClick={() => setProductQuery('')} className="text-slate-400 hover:text-slate-600"><X size={14} /></button>
+          )}
+          <span className="ml-2 text-xs text-slate-400">{sortedFilteredProducts.length} produk</span>
         </div>
-        {loading ? <p className="p-8 text-center text-sm text-slate-500">Memuat produk...</p> : !visible.length ? <p className="p-8 text-center text-sm text-slate-500">Produk tidak ditemukan.</p> : null}
-      </section>
 
-      {selected && (
-        <section className="mt-7 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 px-5 py-4">
-            <h2 className="text-lg font-extrabold text-primary">Detail Produk: {selected.name}</h2>
-            <button
-              onClick={() => {
-                setEditingVariantId(null)
-                setVariantForm(emptyVariant(String(selected.id)))
-                setShowVariantForm(true)
-              }}
-              className="ml-auto inline-flex items-center gap-1 rounded-md border border-accent px-3 py-2 text-xs font-bold text-accent"
-            >
-              <Plus size={14} />Tambah Variant
-            </button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[700px] text-left text-sm">
+        <div className="overflow-x-auto">
+          {loading ? (
+            <p className="py-8 text-center text-sm text-slate-500">Memuat produk…</p>
+          ) : (
+            <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th className="px-5 py-3">Variant</th>
-                  <th className="px-5 py-3">API Code</th>
-                  <th className="px-5 py-3">Harga Default</th>
-                  <th className="px-5 py-3">Status</th>
-                  <th className="px-5 py-3 text-right">Action</th>
+                  {(['Produk', 'Brand', 'Kategori', 'Variant', 'Status'] as const).map((label, i) => (
+                    <th
+                      key={label}
+                      onClick={() => toggleProductSort(i)}
+                      className={`cursor-pointer select-none px-4 py-3 ${i === 3 ? 'text-center' : ''}`}
+                    >
+                      <span className="inline-flex items-center gap-1">
+                        {label}
+                        {productSort.col === i
+                          ? productSort.asc ? <ChevronUp size={12} /> : <ChevronDown size={12} />
+                          : <ChevronsUpDown size={12} className="opacity-30" />}
+                      </span>
+                    </th>
+                  ))}
+                  <th className="px-4 py-3 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {variants.map(v => (
-                  <tr key={v.id}>
-                    <td className="px-5 py-4 font-semibold text-primary">{v.name}</td>
-                    <td className="px-5 py-4 font-mono text-xs">{v.api_code}</td>
-                    <td className="px-5 py-4 text-slate-700">{v.default_price ? `Rp${Number(v.default_price).toLocaleString('id-ID')}` : '-'}</td>
-                    <td className="px-5 py-4"><Badge status={v.status} /></td>
-                    <td className="px-5 py-4 text-right">
+                {productPageRows.length === 0 ? (
+                  <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-slate-400">Produk tidak ditemukan.</td></tr>
+                ) : productPageRows.map(p => (
+                  <tr
+                    key={p.id}
+                    onClick={() => selectProduct(p)}
+                    className={`cursor-pointer transition hover:bg-orange-50/60 ${selected?.id === p.id ? 'bg-orange-50/40' : ''}`}
+                  >
+                    <td className="px-4 py-3 font-semibold text-primary">{p.name}</td>
+                    <td className="px-4 py-3 text-slate-700">{p.brand_name}</td>
+                    <td className="px-4 py-3 text-slate-700">{p.category_name}</td>
+                    <td className="px-4 py-3 text-center">{p.variant_count}</td>
+                    <td className="px-4 py-3"><Badge status={p.status} /></td>
+                    <td className="px-4 py-3 text-right">
                       <button
-                        onClick={() => {
-                          setEditingVariantId(v.id)
-                          setVariantForm({
-                            productId: String(v.product_id),
-                            name: v.name,
-                            apiCode: v.api_code,
-                            defaultPrice: v.default_price ?? '',
-                            internalNote: v.internal_note || '',
-                            sortOrder: v.sort_order,
-                            status: v.status,
-                            overrideActiveApiCode: false,
-                          })
-                          setShowVariantForm(true)
-                        }}
-                        className="mr-2 inline-flex items-center gap-1 text-sm font-bold text-primary"
+                        onClick={e => { e.stopPropagation(); editProduct(p) }}
+                        className="inline-flex items-center gap-1 text-sm font-bold text-primary hover:text-accent"
                       >
-                        <Edit3 size={14} />Edit
-                      </button>
-                      <span className="text-slate-300">/</span>
-                      <button onClick={() => testApi(v.api_code)} className="ml-2 inline-flex items-center gap-1 text-sm font-bold text-accent">
-                        <TestTube2 size={14} />Test API
+                        <Edit3 size={14} /> Edit
                       </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          )}
+        </div>
+
+        {/* Pagination produk */}
+        {productTotalPages > 1 && (
+          <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 text-xs text-slate-500">
+            <span>
+              Halaman {productPageSafe} / {productTotalPages}
+              &nbsp;·&nbsp;
+              {(productPageSafe - 1) * 10 + 1}–{Math.min(productPageSafe * 10, sortedFilteredProducts.length)} dari {sortedFilteredProducts.length}
+            </span>
+            <div className="flex gap-1">
+              <PagBtn onClick={() => setProductPage(1)} disabled={productPageSafe <= 1}>«</PagBtn>
+              <PagBtn onClick={() => setProductPage(p => Math.max(1, p - 1))} disabled={productPageSafe <= 1}>‹</PagBtn>
+              <PagBtn onClick={() => setProductPage(p => Math.min(productTotalPages, p + 1))} disabled={productPageSafe >= productTotalPages}>›</PagBtn>
+              <PagBtn onClick={() => setProductPage(productTotalPages)} disabled={productPageSafe >= productTotalPages}>»</PagBtn>
+            </div>
           </div>
-          {!variants.length && <p className="p-6 text-sm text-slate-500">Belum ada variant.</p>}
+        )}
+        <p className="px-4 pb-3 pt-1 text-xs text-slate-400">☝ Klik baris untuk melihat detail &amp; variant produk.</p>
+      </section>
+
+      {/* ── Detail Produk + Tabel Variant ── */}
+      {selected && (
+        <section className="mt-7 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          {/* Detail header */}
+          <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 px-5 py-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wide text-accent">Detail Produk</p>
+              <h2 className="mt-0.5 text-lg font-extrabold text-primary">{selected.name}</h2>
+            </div>
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                onClick={() => editProduct(selected)}
+                className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-3 py-2 text-xs font-bold text-primary hover:border-accent hover:text-accent"
+              >
+                <Edit3 size={14} /> Edit Produk
+              </button>
+              <button
+                onClick={() => { setEditingVariantId(null); setVariantForm(emptyVariant(String(selected.id))); setShowVariantForm(true) }}
+                className="inline-flex items-center gap-1 rounded-md border border-accent px-3 py-2 text-xs font-bold text-accent"
+              >
+                <Plus size={14} /> Tambah Variant
+              </button>
+              <button onClick={closeDetail} className="rounded p-1 text-slate-400 hover:text-slate-700">
+                <X size={18} />
+              </button>
+            </div>
+          </div>
+
+          {/* Info ringkas produk */}
+          <div className="grid grid-cols-2 gap-x-6 gap-y-2 border-b border-slate-100 px-5 py-4 text-sm md:grid-cols-4">
+            <div><span className="block text-xs text-slate-400">Kategori</span><span className="font-semibold text-primary">{selected.category_name}</span></div>
+            <div><span className="block text-xs text-slate-400">Brand</span><span className="font-semibold text-primary">{selected.brand_name}</span></div>
+            <div><span className="block text-xs text-slate-400">Slug</span><span className="font-mono text-xs text-slate-600">{selected.slug}</span></div>
+            <div><span className="block text-xs text-slate-400">Status</span><Badge status={selected.status} /></div>
+            {selected.description && (
+              <div className="col-span-2 md:col-span-4">
+                <span className="block text-xs text-slate-400">Deskripsi</span>
+                <p className="text-slate-600">{selected.description}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Search variant */}
+          <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3">
+            <Search size={16} className="shrink-0 text-slate-400" />
+            <input
+              type="text"
+              value={variantQuery}
+              onChange={e => setVariantQuery(e.target.value)}
+              placeholder="Cari variant, API code…"
+              className="min-w-0 flex-1 bg-transparent py-1 text-sm text-primary outline-none placeholder:text-slate-400"
+            />
+            {variantQuery && (
+              <button onClick={() => setVariantQuery('')} className="text-slate-400 hover:text-slate-600"><X size={14} /></button>
+            )}
+          </div>
+
+          {/* Tabel Variant */}
+          <div className="overflow-x-auto">
+            {variants.length === 0 ? (
+              <p className="py-4 px-4 text-sm text-slate-500">Belum ada variant untuk produk ini.</p>
+            ) : (
+              <table className="w-full text-left text-sm">
+                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                  <tr>
+                    {(['Variant', 'API Code', 'Harga Default', 'Status'] as const).map((label, i) => (
+                      <th
+                        key={label}
+                        onClick={() => toggleVariantSort(i)}
+                        className="cursor-pointer select-none px-4 py-3"
+                      >
+                        <span className="inline-flex items-center gap-1">
+                          {label}
+                          {variantSort.col === i
+                            ? variantSort.asc ? <ChevronUp size={12} /> : <ChevronDown size={12} />
+                            : <ChevronsUpDown size={12} className="opacity-30" />}
+                        </span>
+                      </th>
+                    ))}
+                    <th className="px-4 py-3 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {variantPageRows.length === 0 ? (
+                    <tr><td colSpan={5} className="px-4 py-6 text-center text-sm text-slate-400">Variant tidak ditemukan.</td></tr>
+                  ) : variantPageRows.map(v => (
+                    <tr key={v.id}>
+                      <td className="px-4 py-3 font-semibold text-primary">{v.name}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-slate-600">{v.api_code}</td>
+                      <td className="px-4 py-3 text-slate-700">
+                        {v.default_price ? `Rp${Number(v.default_price).toLocaleString('id-ID')}` : '—'}
+                      </td>
+                      <td className="px-4 py-3"><Badge status={v.status} /></td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => {
+                            setEditingVariantId(v.id)
+                            setVariantForm({
+                              productId: String(v.product_id), name: v.name,
+                              apiCode: v.api_code, defaultPrice: v.default_price ?? '',
+                              internalNote: v.internal_note || '', sortOrder: v.sort_order,
+                              status: v.status, overrideActiveApiCode: false,
+                            })
+                            setShowVariantForm(true)
+                          }}
+                          className="inline-flex items-center gap-1 text-sm font-bold text-primary hover:text-accent"
+                        >
+                          <Edit3 size={14} /> Edit
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* Pagination variant */}
+          {variantTotalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 text-xs text-slate-500">
+              <span>Halaman {variantPageSafe} / {variantTotalPages}</span>
+              <div className="flex gap-1">
+                <PagBtn onClick={() => setVariantPage(1)} disabled={variantPageSafe <= 1}>«</PagBtn>
+                <PagBtn onClick={() => setVariantPage(p => Math.max(1, p - 1))} disabled={variantPageSafe <= 1}>‹</PagBtn>
+                <PagBtn onClick={() => setVariantPage(p => Math.min(variantTotalPages, p + 1))} disabled={variantPageSafe >= variantTotalPages}>›</PagBtn>
+                <PagBtn onClick={() => setVariantPage(variantTotalPages)} disabled={variantPageSafe >= variantTotalPages}>»</PagBtn>
+              </div>
+            </div>
+          )}
         </section>
       )}
 
-      {showProductForm && <ProductDialog value={productForm} setValue={setProductForm} categories={categories} brands={productFormBrandOptions} title={editingProductId ? 'Edit Produk' : 'Tambah Produk'} close={() => setShowProductForm(false)} submit={saveProduct} />}
-      {showVariantForm && <VariantDialog value={variantForm} setValue={setVariantForm} title={editingVariantId ? 'Edit Variant' : 'Tambah Variant'} close={() => setShowVariantForm(false)} submit={saveVariant} />}
+
+      {showProductForm && (
+        <ProductDialog
+          value={productForm} setValue={setProductForm}
+          categories={categories} brands={productFormBrandOptions}
+          title={editingProductId ? 'Edit Produk' : 'Tambah Produk'}
+          close={() => setShowProductForm(false)} submit={saveProduct}
+        />
+      )}
+      {showVariantForm && (
+        <VariantDialog
+          value={variantForm} setValue={setVariantForm}
+          title={editingVariantId ? 'Edit Variant' : 'Tambah Variant'}
+          close={() => setShowVariantForm(false)} submit={saveVariant}
+        />
+      )}
     </div>
   )
 }
+
+// ---- Sub-components ----
 
 function Select({ label, value, setValue, rows }: { label: string; value: string; setValue: (v: string) => void; rows: Named[] }) {
   return (
@@ -314,12 +524,34 @@ function Select({ label, value, setValue, rows }: { label: string; value: string
   )
 }
 
+function PagBtn({ onClick, disabled, children }: { onClick: () => void; disabled: boolean; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="rounded border border-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-600 disabled:cursor-not-allowed disabled:opacity-30 hover:not-disabled:border-accent hover:not-disabled:text-accent"
+    >
+      {children}
+    </button>
+  )
+}
+
+
 function Badge({ status }: { status: Status }) {
-  return <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${status === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{status === 'active' ? 'Aktif' : 'Inactive'}</span>
+  return (
+    <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${status === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+      {status === 'active' ? 'Aktif' : 'Inactive'}
+    </span>
+  )
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <label className="block"><span className="mb-1.5 block text-xs font-bold text-slate-600">{label}</span>{children}</label>
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-xs font-bold text-slate-600">{label}</span>
+      {children}
+    </label>
+  )
 }
 
 function Dialog({ title, children, close, submit }: { title: string; children: React.ReactNode; close: () => void; submit: (e: FormEvent) => void }) {
@@ -343,15 +575,32 @@ function Dialog({ title, children, close, submit }: { title: string; children: R
 function ProductDialog({ value, setValue, categories, brands, title, close, submit }: any) {
   return (
     <Dialog title={title} close={close} submit={submit}>
-      <Field label="Kategori"><select required value={value.categoryId} onChange={e => setValue((v: any) => ({ ...v, categoryId: e.target.value, brandId: '' }))} className="input-internal"><option value="">Pilih kategori</option>{categories.map((x: Named) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></Field>
-      <Field label="Brand"><select required value={value.brandId} onChange={e => setValue((v: any) => ({ ...v, brandId: e.target.value }))} className="input-internal"><option value="">Pilih brand</option>{brands.map((x: Named) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></Field>
+      <Field label="Kategori">
+        <select required value={value.categoryId} onChange={e => setValue((v: any) => ({ ...v, categoryId: e.target.value, brandId: '' }))} className="input-internal">
+          <option value="">Pilih kategori</option>
+          {categories.map((x: Named) => <option key={x.id} value={x.id}>{x.name}</option>)}
+        </select>
+      </Field>
+      <Field label="Brand">
+        <select required value={value.brandId} onChange={e => setValue((v: any) => ({ ...v, brandId: e.target.value }))} className="input-internal">
+          <option value="">Pilih brand</option>
+          {brands.map((x: Named) => <option key={x.id} value={x.id}>{x.name}</option>)}
+        </select>
+      </Field>
       <Field label="Nama produk"><input required value={value.name} onChange={e => setValue((v: any) => ({ ...v, name: e.target.value }))} className="input-internal" /></Field>
       <Field label="Slug"><input value={value.slug} onChange={e => setValue((v: any) => ({ ...v, slug: e.target.value }))} className="input-internal" /></Field>
       <Field label="Search keywords"><input value={value.searchKeywords} onChange={e => setValue((v: any) => ({ ...v, searchKeywords: e.target.value }))} className="input-internal" /></Field>
       <Field label="URL gambar"><input value={value.imageUrl} onChange={e => setValue((v: any) => ({ ...v, imageUrl: e.target.value }))} className="input-internal" /></Field>
       <Field label="Urutan"><input type="number" min="0" value={value.sortOrder} onChange={e => setValue((v: any) => ({ ...v, sortOrder: Number(e.target.value) }))} className="input-internal" /></Field>
-      <Field label="Status"><select value={value.status} onChange={e => setValue((v: any) => ({ ...v, status: e.target.value }))} className="input-internal"><option value="active">Aktif</option><option value="inactive">Inactive</option></select></Field>
-      <div className="md:col-span-2"><Field label="Deskripsi"><textarea value={value.description} onChange={e => setValue((v: any) => ({ ...v, description: e.target.value }))} className="input-internal min-h-24" /></Field></div>
+      <Field label="Status">
+        <select value={value.status} onChange={e => setValue((v: any) => ({ ...v, status: e.target.value }))} className="input-internal">
+          <option value="active">Aktif</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </Field>
+      <div className="md:col-span-2">
+        <Field label="Deskripsi"><textarea value={value.description} onChange={e => setValue((v: any) => ({ ...v, description: e.target.value }))} className="input-internal min-h-24" /></Field>
+      </div>
     </Dialog>
   )
 }
@@ -359,13 +608,23 @@ function ProductDialog({ value, setValue, categories, brands, title, close, subm
 function VariantDialog({ value, setValue, title, close, submit }: any) {
   return (
     <Dialog title={title} close={close} submit={submit}>
-      <Field label="Nama variant"><input required value={value.name} onChange={e => setValue((v: any) => ({ ...v, name: e.target.value }))} className="input-internal" /></Field>
-      <Field label="API code"><input required value={value.apiCode} onChange={e => setValue((v: any) => ({ ...v, apiCode: e.target.value }))} className="input-internal" /></Field>
-      <Field label="Harga default"><input type="number" min="0" value={value.defaultPrice} onChange={e => setValue((v: any) => ({ ...v, defaultPrice: e.target.value }))} className="input-internal" placeholder="Kosongkan jika belum ada harga default" /></Field>
+      <Field label="Nama variant"><input required value={value.name} onChange={e => setValue((v: any) => ({ ...v, name: e.target.value }))} className="input-internal" placeholder="Contoh: 128GB, Pro 256GB" /></Field>
+      <Field label="API code (opsional)"><input value={value.apiCode} onChange={e => setValue((v: any) => ({ ...v, apiCode: e.target.value }))} className="input-internal" placeholder="Contoh: IP_11_128GB_IBOX" /></Field>
+      <Field label="Harga manual / default (Rp)"><input type="number" min="0" value={value.defaultPrice} onChange={e => setValue((v: any) => ({ ...v, defaultPrice: e.target.value }))} className="input-internal" placeholder="Contoh: 4000000 (digunakan jika API tidak diisi)" /></Field>
       <Field label="Urutan"><input type="number" min="0" value={value.sortOrder} onChange={e => setValue((v: any) => ({ ...v, sortOrder: Number(e.target.value) }))} className="input-internal" /></Field>
-      <Field label="Status"><select value={value.status} onChange={e => setValue((v: any) => ({ ...v, status: e.target.value }))} className="input-internal"><option value="active">Aktif</option><option value="inactive">Inactive</option></select></Field>
-      <div className="md:col-span-2"><Field label="Catatan internal"><textarea value={value.internalNote} onChange={e => setValue((v: any) => ({ ...v, internalNote: e.target.value }))} className="input-internal min-h-24" /></Field></div>
-      <label className="md:col-span-2 flex items-center gap-2 text-xs text-slate-600"><input type="checkbox" checked={value.overrideActiveApiCode} onChange={e => setValue((v: any) => ({ ...v, overrideActiveApiCode: e.target.checked }))} />Override API code aktif (khusus super admin)</label>
+      <Field label="Status">
+        <select value={value.status} onChange={e => setValue((v: any) => ({ ...v, status: e.target.value }))} className="input-internal">
+          <option value="active">Aktif</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </Field>
+      <div className="md:col-span-2">
+        <Field label="Catatan internal"><textarea value={value.internalNote} onChange={e => setValue((v: any) => ({ ...v, internalNote: e.target.value }))} className="input-internal min-h-24" /></Field>
+      </div>
+      <label className="md:col-span-2 flex items-center gap-2 text-xs text-slate-600">
+        <input type="checkbox" checked={value.overrideActiveApiCode} onChange={e => setValue((v: any) => ({ ...v, overrideActiveApiCode: e.target.checked }))} />
+        Override API code aktif (khusus super admin)
+      </label>
     </Dialog>
   )
 }

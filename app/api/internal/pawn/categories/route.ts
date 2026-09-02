@@ -1,21 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentAdmin } from '@/lib/internal/auth'
-import { itemFields } from '@/lib/internal/pawn'
-import { createCategory, listCategories } from '@/lib/pawn-catalog-store'
+import { execute, queryRows } from '@/lib/internal/db'
+import { audit, itemFields } from '@/lib/internal/pawn'
 
 export const runtime = 'nodejs'
+
 export async function GET(request: NextRequest) {
   if (!await getCurrentAdmin()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const q = String(new URL(request.url).searchParams.get('q') || '').trim().toLowerCase()
-  const rows = listCategories()
-    .filter(row => !q || [row.name, row.slug].join(' ').toLowerCase().includes(q))
-    .map(row => ({ id: row.id, name: row.name, slug: row.slug, image_url: row.image_url, sort_order: row.sort_order, status: row.status }))
+  let sql = `SELECT id, name, slug, image_url, sort_order, status FROM pawn_categories`
+  const params: unknown[] = []
+  if (q) {
+    sql += ` WHERE LOWER(name) LIKE ? OR LOWER(slug) LIKE ?`
+    params.push(`%${q}%`, `%${q}%`)
+  }
+  sql += ` ORDER BY sort_order ASC, name ASC`
+  const rows = await queryRows(sql, params)
   return NextResponse.json({ data: rows })
 }
+
 export async function POST(request: NextRequest) {
-  const admin = await getCurrentAdmin(); if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const v = itemFields(await request.json().catch(() => ({})), 'category')
+  const admin = await getCurrentAdmin()
+  if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const body = await request.json().catch(() => ({}))
+  const v = itemFields(body, 'category')
   if (!v.name || !v.slug) return NextResponse.json({ error: 'Nama kategori wajib diisi.' }, { status: 400 })
-  const created = createCategory({ name: v.name, slug: v.slug, imageUrl: v.image || undefined, sortOrder: v.sortOrder, status: v.status })
-  return NextResponse.json({ ok:true,id:created.id }, {status:201})
+
+  const res = await execute(
+    `INSERT INTO pawn_categories (name, slug, image_url, sort_order, status) VALUES (?, ?, ?, ?, ?)`,
+    [v.name, v.slug, v.image, v.sortOrder, v.status]
+  )
+  await audit(admin.id, 'pawn_category', res.insertId, 'create', null, { id: res.insertId, ...v })
+  return NextResponse.json({ ok: true, id: res.insertId }, { status: 201 })
 }
