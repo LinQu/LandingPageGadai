@@ -85,6 +85,16 @@ CREATE TABLE IF NOT EXISTS pawn_product_variants (
   CONSTRAINT fk_pawn_variants_product FOREIGN KEY (product_id) REFERENCES pawn_products(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS pawn_category_brands (
+  category_id BIGINT UNSIGNED NOT NULL,
+  brand_id BIGINT UNSIGNED NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (category_id, brand_id),
+  KEY idx_pawn_cat_brand_brand (brand_id),
+  CONSTRAINT fk_pawn_cat_brand_category FOREIGN KEY (category_id) REFERENCES pawn_categories(id) ON DELETE CASCADE,
+  CONSTRAINT fk_pawn_cat_brand_brand FOREIGN KEY (brand_id) REFERENCES pawn_brands(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS admin_audit_logs (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, admin_user_id BIGINT UNSIGNED NULL,
   entity_type VARCHAR(80) NOT NULL, entity_id BIGINT UNSIGNED NOT NULL, action VARCHAR(80) NOT NULL,

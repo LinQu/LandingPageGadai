@@ -39,6 +39,31 @@ async function runMigration() {
     console.warn('Column check warning:', colErr.message)
   }
 
+  // Ensure pawn_category_brands table exists and backfill from pawn_products
+  try {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS pawn_category_brands (
+        category_id BIGINT UNSIGNED NOT NULL,
+        brand_id BIGINT UNSIGNED NOT NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (category_id, brand_id),
+        KEY idx_pawn_cat_brand_brand (brand_id),
+        CONSTRAINT fk_pawn_cat_brand_category FOREIGN KEY (category_id) REFERENCES pawn_categories(id) ON DELETE CASCADE,
+        CONSTRAINT fk_pawn_cat_brand_brand FOREIGN KEY (brand_id) REFERENCES pawn_brands(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB
+    `)
+
+    await db.query(`
+      INSERT IGNORE INTO pawn_category_brands (category_id, brand_id)
+      SELECT DISTINCT category_id, brand_id
+      FROM pawn_products
+      WHERE category_id IS NOT NULL AND brand_id IS NOT NULL
+    `)
+    console.log('pawn_category_brands table and relationships verified.')
+  } catch (cbErr) {
+    console.warn('Category-brands setup warning:', cbErr.message)
+  }
+
   await db.end()
   console.log('Migration completed successfully!')
 }

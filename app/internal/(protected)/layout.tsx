@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { Archive, BrainCircuit, BriefcaseBusiness, FileText, LayoutDashboard, Package, Wrench } from 'lucide-react'
+import { Archive, BrainCircuit, BriefcaseBusiness, FileText, Layers, LayoutDashboard, Package, Wrench } from 'lucide-react'
 import { getCurrentAdmin } from '@/lib/internal/auth'
 import { LogoutButton } from '@/components/internal/logout-button'
 
@@ -10,6 +10,7 @@ const menu = [
   { href: '/internal', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/internal/artikel', label: 'Artikel', icon: FileText },
   { href: '/internal/arsip', label: 'Arsip', icon: Archive },
+  { href: '/internal/kategori', label: 'Master Kategori', icon: Layers },
   { href: '/internal/barang', label: 'Master Barang', icon: Package },
   { href: '/internal/karir', label: 'Karir & Pelamar', icon: BriefcaseBusiness },
   { href: '/internal/psikotes', label: 'Psikotes', icon: BrainCircuit },

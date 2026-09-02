@@ -1,6 +1,7 @@
 import { execute, queryRows } from './db'
 import { slugify } from './slug'
 
+export { slugify }
 export type PawnStatus = 'active' | 'inactive'
 
 export function statusOf(value: unknown): PawnStatus {
