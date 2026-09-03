@@ -4,7 +4,12 @@ import Image from 'next/image'
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { ChevronLeft, ChevronRight, RotateCcw, Search } from 'lucide-react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  RotateCcw,
+  Search,
+} from 'lucide-react'
 import { BranchSelector } from './branch-selector'
 import { getBranches } from '../../lib/services/branch.service'
 import {
@@ -14,8 +19,14 @@ import {
   getBarangEstimates,
   type BarangEstimate,
 } from '../../lib/services/simulation.service'
-import { getPawnCatalog, type PawnCatalogBrand, type PawnCatalogCategory, type PawnCatalogProduct, type PawnCatalogSpec } from '../../lib/services/pawn-catalog.service'
-import type { Branch, ItemBrand, ItemCategory, ItemSeries, SimulationData } from '../../lib/types'
+import {
+  getPawnCatalog,
+  type PawnCatalogBrand,
+  type PawnCatalogCategory,
+  type PawnCatalogProduct,
+  type PawnCatalogSpec,
+} from '../../lib/services/pawn-catalog.service'
+import type { Branch, ItemBrand, ItemSeries, SimulationData } from '../../lib/types'
 
 type SimulationStage = 'setup' | 'brand' | 'product' | 'variant'
 
@@ -23,52 +34,40 @@ type SimulationFormProps = {
   stage: SimulationStage
 }
 
-const LOAN_SLIDER_STEP = 100000
-const STORAGE_KEY = 'simulationData'
+const STORAGE_KEY = 'gadai_simulation_data'
 
-function formatCurrency(amount: number): string {
+function formatCurrency(value: number): string {
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',
-    minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(amount)
+  }).format(value)
 }
 
-function clampLoanAmount(amount: number, minimum: number, maximum: number): number {
-  if (amount < minimum) {
-    return minimum
+function getLoanSliderStepCount(min: number, max: number): number {
+  if (max <= min) {
+    return 0
   }
 
-  if (amount > maximum) {
-    return maximum
-  }
-
-  return amount
+  return Math.ceil((max - min) / 50000)
 }
 
-function getLoanSliderStepCount(minimum: number, maximum: number): number {
-  return Math.max(Math.ceil((maximum - minimum) / LOAN_SLIDER_STEP), 1)
-}
-
-function getLoanAmountFromSliderStep(sliderStep: number, minimum: number, maximum: number): number {
-  const sliderStepCount = getLoanSliderStepCount(minimum, maximum)
-
-  if (sliderStep >= sliderStepCount) {
-    return maximum
+function getSliderStepFromLoanAmount(amount: number, min: number, max: number): number {
+  if (max <= min) {
+    return 0
   }
 
-  return clampLoanAmount(minimum + sliderStep * LOAN_SLIDER_STEP, minimum, maximum)
+  const boundedAmount = Math.max(min, Math.min(max, amount))
+  return Math.round((boundedAmount - min) / 50000)
 }
 
-function getSliderStepFromLoanAmount(amount: number, minimum: number, maximum: number): number {
-  const sliderStepCount = getLoanSliderStepCount(minimum, maximum)
-
-  if (amount >= maximum) {
-    return sliderStepCount
+function getLoanAmountFromSliderStep(step: number, min: number, max: number): number {
+  if (max <= min) {
+    return min
   }
 
-  return Math.round((clampLoanAmount(amount, minimum, maximum) - minimum) / LOAN_SLIDER_STEP)
+  const calculated = min + step * 50000
+  return Math.min(max, calculated)
 }
 
 function readStoredSimulation(): Partial<SimulationData> {
@@ -76,7 +75,7 @@ function readStoredSimulation(): Partial<SimulationData> {
     return {}
   }
 
-  const storedValue = window.localStorage.getItem(STORAGE_KEY)
+  const storedValue = window.localStorage.getItem(STORAGE_KEY) || window.localStorage.getItem('simulationData')
   if (!storedValue) {
     return {}
   }
@@ -88,12 +87,19 @@ function readStoredSimulation(): Partial<SimulationData> {
   }
 }
 
-function clearStoredSimulation(): void {
-  if (typeof window === 'undefined') {
-    return
-  }
-
-  window.localStorage.removeItem(STORAGE_KEY)
+function SimulationStepProgressBar({ currentStep }: { currentStep: number }) {
+  return (
+    <div className="grid grid-cols-4 gap-2 sm:gap-3 py-1">
+      {[1, 2, 3, 4].map(step => (
+        <div
+          key={step}
+          className={`h-1.5 sm:h-2 rounded-full transition-colors duration-300 ${
+            step <= currentStep ? 'bg-red-600' : 'bg-slate-200'
+          }`}
+        />
+      ))}
+    </div>
+  )
 }
 
 export function SimulationForm({ stage }: SimulationFormProps) {
@@ -112,7 +118,6 @@ export function SimulationForm({ stage }: SimulationFormProps) {
   const selectedTenor = 30 as const
 
   const [branches, setBranches] = useState<Branch[]>([])
-  const [branchSearchQuery, setBranchSearchQuery] = useState('')
   const [categorySearchQuery, setCategorySearchQuery] = useState('')
   const [brandSearchQuery, setBrandSearchQuery] = useState('')
   const [productSearchQuery, setProductSearchQuery] = useState('')
@@ -168,6 +173,7 @@ export function SimulationForm({ stage }: SimulationFormProps) {
     }
 
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(simulation))
+    window.localStorage.setItem('simulationData', JSON.stringify(simulation))
   }, [hydrated, simulation])
 
   const selectedCategoryKey = simulation.category?.kode || ''
@@ -180,7 +186,7 @@ export function SimulationForm({ stage }: SimulationFormProps) {
     }
 
     for (const brand of categoryItems) {
-      const product = brand.products.find(item => item.id === simulation.series?.id)
+      const product = brand.products.find((item: PawnCatalogProduct) => item.id === simulation.series?.id)
       if (product) {
         return product
       }
@@ -268,7 +274,7 @@ export function SimulationForm({ stage }: SimulationFormProps) {
       return
     }
 
-    if (stage === 'product' && (!hasBranch || !hasCategory || !hasBrand || !selectedCategory?.brands.find(brand => brand.id === simulation.brand?.id))) {
+    if (stage === 'product' && (!hasBranch || !hasCategory || !hasBrand || !selectedCategory?.brands.find((b: PawnCatalogBrand) => b.id === simulation.brand?.id))) {
       router.replace('/simulasi/brand')
       return
     }
@@ -291,18 +297,6 @@ export function SimulationForm({ stage }: SimulationFormProps) {
     })
   }, [branches])
 
-  const filteredBranches = useMemo(() => {
-    const query = branchSearchQuery.trim().toLowerCase()
-
-    if (!query) {
-      return nearestBranches
-    }
-
-    return nearestBranches.filter(branch =>
-      [branch.NamaCabang, branch.Kota, branch.Provinsi, branch.Alamat].join(' ').toLowerCase().includes(query)
-    )
-  }, [branchSearchQuery, nearestBranches])
-
   const filteredCategories = useMemo(() => {
     const query = categorySearchQuery.trim().toLowerCase()
 
@@ -311,7 +305,7 @@ export function SimulationForm({ stage }: SimulationFormProps) {
     }
 
     return catalog.filter(category =>
-      [category.name, category.kode, category.brands.map(brand => brand.name).join(' ')].join(' ').toLowerCase().includes(query)
+      [category.name, category.kode, category.brands.map((brand: PawnCatalogBrand) => brand.name).join(' ')].join(' ').toLowerCase().includes(query)
     )
   }, [catalog, categorySearchQuery])
 
@@ -324,7 +318,7 @@ export function SimulationForm({ stage }: SimulationFormProps) {
       return brandOptions
     }
 
-    return brandOptions.filter(option => option.name.toLowerCase().includes(query))
+    return brandOptions.filter((option: PawnCatalogBrand) => option.name.toLowerCase().includes(query))
   }, [brandOptions, brandSearchQuery])
 
   const selectedBrandProducts = useMemo(() => {
@@ -332,7 +326,8 @@ export function SimulationForm({ stage }: SimulationFormProps) {
       return []
     }
 
-    return brandOptions.find(option => option.id === simulation.brand?.id)?.products || []
+    const rawProducts = brandOptions.find((option: PawnCatalogBrand) => option.id === simulation.brand?.id)?.products || []
+    return rawProducts.filter((item: PawnCatalogProduct) => Array.isArray(item.specs) && item.specs.length > 0)
   }, [brandOptions, simulation.brand?.id])
 
   const filteredProducts = useMemo(() => {
@@ -342,7 +337,7 @@ export function SimulationForm({ stage }: SimulationFormProps) {
       return selectedBrandProducts
     }
 
-    return selectedBrandProducts.filter(item =>
+    return selectedBrandProducts.filter((item: PawnCatalogProduct) =>
       [item.name, item.summary, ...item.aliases].join(' ').toLowerCase().includes(query)
     )
   }, [productSearchQuery, selectedBrandProducts])
@@ -358,7 +353,7 @@ export function SimulationForm({ stage }: SimulationFormProps) {
       return selectedProduct.specs
     }
 
-      return selectedProduct.specs.filter(spec =>
+    return selectedProduct.specs.filter((spec: PawnCatalogSpec) =>
       [spec.label, spec.note || '', spec.id].join(' ').toLowerCase().includes(query)
     )
   }, [selectedProduct, variantSearchQuery])
@@ -437,7 +432,7 @@ export function SimulationForm({ stage }: SimulationFormProps) {
     return () => {
       isMounted = false
     }
-  }, [fallbackPriceRange, selectedNoHp, selectedSpec, stage])
+  }, [fallbackPriceRange, selectedNoHp, selectedSpec, stage, branchCode])
 
   const selectedBranchEstimate = useMemo(() => {
     if (barangEstimates.length === 0) return undefined
@@ -546,6 +541,7 @@ export function SimulationForm({ stage }: SimulationFormProps) {
       category: {
         kode: category.kode,
         name: category.name,
+        imageUrl: category.imageUrl,
         icon: category.icon,
       },
       brand: undefined,
@@ -603,7 +599,6 @@ export function SimulationForm({ stage }: SimulationFormProps) {
       adminFee: undefined,
     }))
 
-    
     setProductSearchQuery('')
     setVariantSearchQuery('')
     resetEstimateData()
@@ -611,15 +606,15 @@ export function SimulationForm({ stage }: SimulationFormProps) {
   }
 
   const handleSelectProduct = (item: PawnCatalogProduct) => {
-    const series: ItemSeries = {
+    const seriesItem: ItemSeries = {
       id: item.id,
-      brandId: simulation.brand?.id || '',
       name: item.name,
+      brandId: simulation.brand?.id || '',
     }
 
     updateSimulation(prev => ({
       ...prev,
-      series,
+      series: seriesItem,
       itemName: item.name,
       variant: undefined,
       specification: undefined,
@@ -675,6 +670,7 @@ export function SimulationForm({ stage }: SimulationFormProps) {
       }
 
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
+      window.localStorage.setItem('simulationData', JSON.stringify(payload))
       router.push('/booking')
     }
   }
@@ -684,153 +680,174 @@ export function SimulationForm({ stage }: SimulationFormProps) {
     : null
 
   if (!hydrated) {
-    return <div className="rounded-2xl bg-white p-6 text-sm text-slate-500 shadow-sm ring-1 ring-black/5">Memuat simulasi...</div>
+    return (
+      <div className="rounded-2xl bg-white p-6 text-sm text-slate-500 shadow-sm ring-1 ring-black/5">
+        Memuat simulasi...
+      </div>
+    )
   }
 
+  // ==========================================
+  // STAGE 1: SETUP (Cabang & Kategori)
+  // ==========================================
   if (stage === 'setup') {
     return (
-      <div className="space-y-8">
-        <section className="relative overflow-hidden rounded-[2rem] bg-white px-6 py-8 shadow-sm ring-1 ring-black/5 sm:px-8 sm:py-10">
+      <div className="space-y-6 sm:space-y-8">
+        {/* Hero Section */}
+        <section className="relative overflow-hidden rounded-2xl sm:rounded-[2rem] bg-white px-4 py-5 sm:px-8 sm:py-8 shadow-sm ring-1 ring-black/5">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(227,30,36,0.08),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(15,30,61,0.08),transparent_25%)]" />
-          <div className="relative grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
-            <div className="space-y-5">
-              <div className="inline-flex rounded-full bg-accent/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] text-accent">
+          <div className="relative grid gap-4 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+            <div className="space-y-2.5 sm:space-y-4">
+              <div className="inline-flex rounded-full bg-accent/10 px-3 py-1 text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-accent">
                 Taksir Barang Online
               </div>
-              <div className="space-y-2">
-                <h1 className="max-w-xl text-4xl font-black leading-[0.95] text-primary sm:text-5xl lg:text-6xl">
-                  <span className="block">Taksir Barang</span>
-                  <span className="relative block text-accent">
-                    Online
-                    <span className="absolute -right-4 top-3 h-1.5 w-10 rotate-[-12deg] rounded-full bg-accent/80 sm:-right-6 sm:top-4 sm:w-12" />
+              <div className="space-y-1 sm:space-y-2">
+                <h1 className="max-w-xl text-2xl font-black leading-tight text-primary sm:text-4xl lg:text-5xl">
+                  <span className="block">Taksir Nilai Barang</span>
+                  <span className="relative inline-block text-accent">
+                    Cepat &amp; Transparan
+                    
                   </span>
                 </h1>
-                <p className="max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
-                  Ingin tahu berapa nilai barang yang bisa kamu gadaikan? Sekarang, kamu bisa mendapatkan estimasi harga barang sebelum datang ke cabang! Gunakan fitur Taksir Barang Online kami untuk mengetahui perkiraan nilai gadai.
+                <p className="max-w-2xl text-xs sm:text-sm leading-normal sm:leading-relaxed text-slate-600">
+                  Dapatkan estimasi nilai barang sebelum datang ke cabang. Pilih cabang terdekat dan kategori barang di bawah.
                 </p>
               </div>
             </div>
 
-            <div className="relative mx-auto w-full max-w-lg">
-              <div className="absolute -left-5 top-8 h-24 w-24 rounded-full bg-slate-900/10 blur-xl" />
-              <div className="absolute -right-4 bottom-8 h-28 w-28 rounded-full bg-accent/15 blur-2xl" />
-              <div className="relative rounded-[2rem] border border-slate-200 bg-gradient-to-b from-slate-900 to-slate-800 p-4 shadow-2xl shadow-slate-900/20">
-                <div className="mx-auto w-[230px] rounded-[2rem] border-8 border-slate-950 bg-white p-3 shadow-lg sm:w-[260px]">
-                  <div className="rounded-[1.5rem] bg-slate-50 p-4">
-                    <div className="mx-auto mb-4 h-1.5 w-24 rounded-full bg-slate-200" />
-                    <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
-                      <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-slate-400">Gadai Sakti</p>
-                      <div className="mt-3 rounded-2xl bg-slate-900 px-4 py-3 text-right text-white">
-                        <div className="text-[11px] uppercase tracking-[0.2em] text-white/60">Estimasi</div>
-                        <div className="mt-2 text-2xl font-black">Rp 9.500.000</div>
+            {/* Visual Graphic */}
+            <div className="relative mx-auto hidden w-full max-w-md lg:block">
+              <div className="relative rounded-[2rem] border border-slate-200 bg-gradient-to-b from-slate-900 to-slate-800 p-4 shadow-xl">
+                <div className="mx-auto w-[220px] rounded-[1.8rem] border-8 border-slate-950 bg-white p-3 shadow-md">
+                  <div className="rounded-[1.4rem] bg-slate-50 p-4">
+                    <div className="mx-auto mb-3 h-1.5 w-20 rounded-full bg-slate-200" />
+                    <div className="rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-slate-100">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Gadai Sakti</p>
+                      <div className="mt-2.5 rounded-xl bg-slate-900 px-3.5 py-2.5 text-right text-white">
+                        <div className="text-[10px] uppercase tracking-[0.2em] text-white/60">Estimasi Cair</div>
+                        <div className="mt-1 text-xl font-black text-amber-400">Rp 4.016.250</div>
                       </div>
-                      <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                        Rp
+                      <div className="mt-3 flex items-center justify-center rounded-lg bg-emerald-50 py-2 text-xs font-bold text-emerald-700">
+                        Proses Cepat &amp; Aman
                       </div>
-                      <button className="mt-4 w-full rounded-full bg-accent px-4 py-3 text-sm font-bold text-white shadow-lg shadow-accent/30">
-                        Estimasi Sekarang
-                      </button>
                     </div>
                   </div>
                 </div>
-
-                <div className="absolute -left-3 top-8 h-14 w-14 rounded-2xl bg-white/10 backdrop-blur-sm" />
-                <div className="absolute -right-1 top-24 h-16 w-16 rounded-full bg-white/10 backdrop-blur-sm" />
-                <div className="absolute left-4 top-4 h-24 w-24 rounded-full border border-white/10 bg-white/5" />
-                <div className="absolute right-5 bottom-5 h-10 w-10 rounded-full border border-white/15 bg-white/10" />
-                <div className="absolute -left-8 bottom-6 h-16 w-16 rounded-full bg-amber-300/90 shadow-lg shadow-amber-500/20" />
-                <div className="absolute -right-4 bottom-12 h-12 w-12 rounded-full bg-amber-200/80 shadow-lg shadow-amber-500/20" />
-                <div className="absolute left-0 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/10" />
               </div>
             </div>
           </div>
         </section>
 
-        <section className="space-y-6">
-          <BranchSelector branches={nearestBranches} onSelectBranch={handleSelectBranch} selectedBranch={simulation.branch || null} helperText={locationMessage} />
+        {/* Form Controls Section */}
+        <section className="space-y-4 sm:space-y-6">
+          {/* Step Progress Bar Indicator */}
+          <SimulationStepProgressBar currentStep={1} />
 
-          <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5 sm:p-6">
-            <div className="text-center">
-              <p className="text-xs font-bold uppercase tracking-[0.24em] text-accent">Pilih Kategori Barang</p>
-              <h2 className="mt-2 text-2xl font-black text-primary sm:text-3xl">Pilih Kategori Barang</h2>
+          {/* 1. Branch Selector (Full Width & Responsive) */}
+          <BranchSelector
+            branches={nearestBranches}
+            onSelectBranch={handleSelectBranch}
+            selectedBranch={simulation.branch || null}
+            helperText={locationMessage}
+          />
+
+          {/* 2. Category Selection (Compact on Mobile 2-col, Tablet 2-col, Desktop 4-col) */}
+          <div className="rounded-2xl bg-white p-4 sm:p-6 shadow-sm ring-1 ring-black/5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-accent">Langkah 2</p>
+                <h2 className="mt-0.5 text-lg sm:text-2xl font-black text-primary">Pilih Kategori Barang</h2>
+              </div>
+              <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
+                {filteredCategories.length} kategori
+              </span>
             </div>
 
-            <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-              {filteredCategories.map(category => {
+            {/* Category Search Filter */}
+            <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 shadow-inner">
+              <div className="flex items-center gap-2">
+                <Search size={15} className="text-slate-400 shrink-0" />
+                <input
+                  type="text"
+                  value={categorySearchQuery}
+                  onChange={e => setCategorySearchQuery(e.target.value)}
+                  placeholder="Cari kategori (HP, Laptop, Tablet...)"
+                  className="w-full bg-transparent py-1 text-xs sm:text-sm outline-none placeholder:text-slate-400"
+                />
+              </div>
+            </div>
+
+            {/* Category Cards Grid: 2-col on mobile portrait, 3-4 col on mobile landscape/tablet/desktop */}
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5 md:grid-cols-4 lg:grid-cols-4">
+              {filteredCategories.map((category: PawnCatalogCategory) => {
                 const isSelected = simulation.category?.kode === category.kode
                 return (
                   <button
                     key={category.kode}
                     type="button"
                     onClick={() => handleSelectCategory(category)}
-                    className={`group rounded-xl border border-slate-100 bg-white p-3 text-left shadow-sm transition-all hover:scale-105 hover:shadow-md ${
-                      isSelected ? 'border-accent ring-1 ring-accent/20' : ''
+                    className={`group rounded-xl border p-2.5 sm:p-4 text-left shadow-sm transition-all hover:shadow-md ${
+                      isSelected
+                        ? 'border-accent bg-accent/5 ring-2 ring-accent/30'
+                        : 'border-slate-200 bg-white hover:border-slate-300'
                     }`}
                   >
-                    <div className="flex h-24 items-center justify-center rounded-lg bg-slate-50 p-2">
+                    <div className="flex h-14 sm:h-20 items-center justify-center rounded-lg bg-slate-50 p-1 sm:p-2">
                       {category.imageUrl ? (
-                        <Image src={category.imageUrl} alt={category.name} width={92} height={92} className="h-16 w-auto object-contain transition-transform duration-300 group-hover:scale-105" />
+                        <Image
+                          src={category.imageUrl}
+                          alt={category.name}
+                          width={80}
+                          height={80}
+                          className="h-10 sm:h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                        />
                       ) : (
-                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/5 text-2xl font-black text-primary/40 transition-transform duration-300 group-hover:scale-105">
+                        <div className="flex h-10 w-10 sm:h-14 sm:w-14 items-center justify-center rounded-lg sm:rounded-xl bg-primary/5 text-base sm:text-xl font-black text-primary/40">
                           {category.name.slice(0, 1).toUpperCase()}
                         </div>
                       )}
                     </div>
-                    <div className="mt-3 text-center text-xs font-black uppercase tracking-[0.18em] text-primary">{category.name}</div>
-                    <div className="mx-auto mt-2 h-1 w-8 rounded-full bg-accent" />
+                    <div className="mt-1.5 sm:mt-3 text-center text-[11px] sm:text-xs font-black uppercase tracking-[0.12em] sm:tracking-[0.16em] text-primary truncate">
+                      {category.name}
+                    </div>
+                    <div className={`mx-auto mt-1 sm:mt-2 h-0.5 sm:h-1 transition-all ${isSelected ? 'bg-accent w-6 sm:w-10' : 'bg-slate-200 w-3 sm:w-6'}`} />
                   </button>
                 )
               })}
             </div>
 
-            <div className="mt-5 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 shadow-sm">
-              <div className="flex items-center gap-3">
-                <input
-                  type="text"
-                  value={categorySearchQuery}
-                  onChange={e => setCategorySearchQuery(e.target.value)}
-                  placeholder="Ketik nama merk hp/laptop/kamera dsb."
-                  className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-slate-400"
-                />
-                <button
-                  type="button"
-                  className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-accent text-white shadow-md shadow-accent/30"
-                  aria-label="Cari kategori"
-                >
-                  <Search size={18} />
-                </button>
-              </div>
-            </div>
-
             {simulation.category ? (
-              <div className="mt-4 rounded-xl bg-primary/5 px-4 py-3 text-sm text-primary">
-                Kategori dipilih: <span className="font-semibold">{simulation.category.name}</span>
+              <div className="mt-3 flex items-center justify-between rounded-xl bg-primary/5 px-3.5 py-2.5 text-xs sm:text-sm text-primary border border-primary/10">
+                <span>Kategori dipilih: <strong className="font-bold">{simulation.category.name}</strong></span>
+                <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] sm:text-[11px] font-bold text-accent">✓ Terpilih</span>
               </div>
             ) : null}
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <button
               type="button"
               onClick={handleContinueFromSetup}
               disabled={!simulation.branch || !simulation.category}
-              className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 font-semibold text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex w-full sm:flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-sm sm:text-base font-bold text-white shadow-md shadow-primary/20 transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Lanjut ke Brand <ChevronRight size={18} />
+              <span>Lanjut Pilih Merek</span>
+              <ChevronRight size={18} />
             </button>
             <button
               type="button"
               onClick={() => {
                 setCategorySearchQuery('')
-                setBranchSearchQuery('')
                 setBrandSearchQuery('')
                 setProductSearchQuery('')
                 setVariantSearchQuery('')
                 resetEstimateData()
               }}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 font-semibold text-primary shadow-sm transition-colors hover:border-accent"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
             >
-              <RotateCcw size={16} /> Reset
+              <RotateCcw size={16} />
+              <span>Reset</span>
             </button>
           </div>
         </section>
@@ -838,103 +855,172 @@ export function SimulationForm({ stage }: SimulationFormProps) {
     )
   }
 
+  // ==========================================
+  // STAGE 2: BRAND SELECTION
+  // ==========================================
   if (stage === 'brand') {
     return (
-      <div className="space-y-6 rounded-[2rem] bg-white p-6 shadow-sm ring-1 ring-black/5 sm:p-8">
-        <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="space-y-4 sm:space-y-6 rounded-2xl sm:rounded-[2rem] bg-white p-4 sm:p-8 shadow-sm ring-1 ring-black/5">
+        {/* Header & Back Button */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3 sm:pb-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-accent">Pilih Brand</p>
-            <h2 className="mt-2 text-3xl font-black text-primary">Halaman Brand</h2>
-            <p className="mt-2 text-sm text-slate-600">Halaman ini khusus untuk brand setelah cabang dan kategori sudah dipilih.</p>
+            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-accent">Langkah 3</p>
+            <h2 className="mt-0.5 text-xl sm:text-3xl font-black text-primary">Pilih Merek / Brand</h2>
+            <p className="mt-0.5 text-xs sm:text-sm text-slate-500">Pilih merek barang yang sesuai.</p>
           </div>
           <button
             type="button"
             onClick={() => router.push('/simulasi')}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-primary shadow-sm"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold text-primary shadow-sm hover:bg-slate-50"
           >
-            <ChevronLeft size={16} /> Kembali
+            <ChevronLeft size={15} />
+            <span>Kembali</span>
           </button>
         </div>
 
+        {/* Selection Summary Breadcrumb - Hanya Menampilkan Cabang Terpilih */}
+        {simulation.branch?.NamaCabang ? (
+          <div className="flex flex-wrap text-[11px] sm:text-xs text-slate-600">
+            <span className="rounded-lg bg-slate-100 px-2.5 py-1 sm:px-3 sm:py-1.5 font-medium">
+              Cabang: <strong className="text-primary">{simulation.branch.NamaCabang}</strong>
+            </span>
+          </div>
+        ) : null}
+
+        {/* Step Progress Bar Indicator */}
+        <SimulationStepProgressBar currentStep={2} />
+
+        {/* Search Input */}
         <div className="relative">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             value={brandSearchQuery}
             onChange={e => setBrandSearchQuery(e.target.value)}
-            placeholder="Cari brand"
-            className="w-full rounded-lg border border-border py-3 pl-10 pr-4 focus:border-primary focus:outline-none"
+            placeholder="Cari nama brand (Apple, Samsung, Asus...)"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 sm:py-3 pl-9 pr-4 text-xs sm:text-sm focus:border-primary focus:bg-white focus:outline-none"
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-          {filteredBrands.map(brand => (
-            <button
-              key={brand.id}
-              type="button"
-              onClick={() => handleSelectBrand(brand)}
-              className="rounded-2xl border-2 border-border bg-white p-4 text-left shadow-sm transition-all hover:border-primary hover:bg-primary/5"
-            >
-              <div className="text-sm font-semibold text-primary">{brand.name}</div>
-              <div className="mt-1 text-xs text-text-muted">{brand.products.length} produk</div>
-            </button>
-          ))}
+        {/* Brand Cards Grid: Mobile portrait 2 col, mobile landscape/tablet/desktop 3 col */}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5 md:grid-cols-3 lg:grid-cols-3">
+          {filteredBrands.map((brand: PawnCatalogBrand) => {
+            const isSelected = simulation.brand?.id === brand.id
+            return (
+              <button
+                key={brand.id}
+                type="button"
+                onClick={() => handleSelectBrand(brand)}
+                className={`flex flex-col justify-between sm:flex-row sm:items-center rounded-xl border-2 p-2.5 sm:p-4 text-left shadow-sm transition group ${
+                  isSelected
+                    ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                    : 'border-slate-200 bg-white hover:border-primary hover:bg-primary/5'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs sm:text-base font-bold text-primary group-hover:text-primary-dark truncate">{brand.name}</span>
+                    {isSelected && <span className="rounded-full bg-accent/10 px-1.5 py-0.2 text-[9px] sm:text-[10px] font-bold text-accent shrink-0">✓</span>}
+                  </div>
+                  <div className="mt-0.5 text-[10px] sm:text-xs text-slate-400">{brand.products.length} produk</div>
+                </div>
+                <ChevronRight size={16} className="text-slate-300 group-hover:text-primary transition hidden sm:block" />
+              </button>
+            )
+          })}
         </div>
 
         {filteredBrands.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-slate-50 p-8 text-center text-text-muted">
-            Tidak ada brand yang cocok dengan pencarian.
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 sm:p-8 text-center text-xs sm:text-sm text-slate-400">
+            Tidak ada brand yang sesuai dengan pencarian.
           </div>
         ) : null}
       </div>
     )
   }
 
+  // ==========================================
+  // STAGE 3: PRODUCT SELECTION
+  // ==========================================
   if (stage === 'product') {
     return (
-      <div className="space-y-6 rounded-[2rem] bg-white p-6 shadow-sm ring-1 ring-black/5 sm:p-8">
-        <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="space-y-4 sm:space-y-6 rounded-2xl sm:rounded-[2rem] bg-white p-4 sm:p-8 shadow-sm ring-1 ring-black/5">
+        {/* Header & Back Button */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3 sm:pb-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-accent">Pilih Produk</p>
-            <h2 className="mt-2 text-3xl font-black text-primary">Halaman Produk</h2>
-            <p className="mt-2 text-sm text-slate-600">Setelah brand dipilih, lanjut ke halaman produk ini sebelum variant.</p>
+            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-accent">Langkah 4</p>
+            <h2 className="mt-0.5 text-xl sm:text-3xl font-black text-primary">Pilih Seri Produk</h2>
+            <p className="mt-0.5 text-xs sm:text-sm text-slate-500">Pilih tipe atau model produk yang Anda miliki.</p>
           </div>
           <button
             type="button"
             onClick={() => router.push('/simulasi/brand')}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-primary shadow-sm"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold text-primary shadow-sm hover:bg-slate-50"
           >
-            <ChevronLeft size={16} /> Kembali
+            <ChevronLeft size={15} />
+            <span>Kembali</span>
           </button>
         </div>
 
+        {/* Selection Summary Breadcrumb - Hanya Menampilkan Cabang Terpilih */}
+        {simulation.branch?.NamaCabang ? (
+          <div className="flex flex-wrap text-[11px] sm:text-xs text-slate-600">
+            <span className="rounded-lg bg-slate-100 px-2.5 py-1 sm:px-3 sm:py-1.5 font-medium">
+              Cabang: <strong className="text-primary">{simulation.branch.NamaCabang}</strong>
+            </span>
+          </div>
+        ) : null}
+
+        {/* Step Progress Bar Indicator */}
+        <SimulationStepProgressBar currentStep={3} />
+
+        {/* Search Input */}
         <div className="relative">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             value={productSearchQuery}
             onChange={e => setProductSearchQuery(e.target.value)}
-            placeholder="Cari produk"
-            className="w-full rounded-lg border border-border py-3 pl-10 pr-4 focus:border-primary focus:outline-none"
+            placeholder="Cari produk (contoh: iPhone 11, Galaxy S21...)"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 sm:py-3 pl-9 pr-4 text-xs sm:text-sm focus:border-primary focus:bg-white focus:outline-none"
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {filteredProducts.map(item => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => handleSelectProduct(item)}
-              className="rounded-2xl border-2 border-border bg-white p-4 text-left shadow-sm transition-all hover:border-primary hover:bg-primary/5"
-            >
-              <div className="text-lg font-semibold text-primary">{item.name}</div>
-              <div className="mt-1 text-sm text-text-muted">{item.summary}</div>
-            </button>
-          ))}
+        {/* Product Cards Grid: Mobile portrait 2 col, mobile landscape/tablet/desktop 3 col */}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5 md:grid-cols-3 lg:grid-cols-3">
+          {filteredProducts.map((item: PawnCatalogProduct) => {
+            const isSelected = simulation.series?.id === item.id
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => handleSelectProduct(item)}
+                className={`flex flex-col justify-between rounded-xl border-2 p-2.5 sm:p-4 text-left shadow-sm transition group ${
+                  isSelected
+                    ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                    : 'border-slate-200 bg-white hover:border-primary hover:bg-primary/5'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs sm:text-base font-bold text-primary group-hover:text-primary-dark truncate">{item.name}</span>
+                    {isSelected && <span className="rounded-full bg-accent/10 px-1.5 py-0.2 text-[9px] sm:text-[10px] font-bold text-accent shrink-0">✓</span>}
+                  </div>
+                  {item.summary && (
+                    <div className="mt-0.5 text-[10px] sm:text-xs text-slate-500 line-clamp-2">{item.summary}</div>
+                  )}
+                </div>
+                <div className="mt-2 sm:mt-3 flex items-center justify-between text-[10px] sm:text-xs font-semibold text-primary pt-1.5 sm:pt-2 border-t border-slate-100">
+                  <span>{isSelected ? 'Terpilih' : 'Pilih'}</span>
+                  <ChevronRight size={14} className="text-slate-400 group-hover:text-primary transition" />
+                </div>
+              </button>
+            )
+          })}
         </div>
 
         {filteredProducts.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-slate-50 p-8 text-center text-text-muted">
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 sm:p-8 text-center text-xs sm:text-sm text-slate-400">
             Tidak ada produk yang cocok dengan pencarian.
           </div>
         ) : null}
@@ -942,198 +1028,251 @@ export function SimulationForm({ stage }: SimulationFormProps) {
     )
   }
 
+  // ==========================================
+  // STAGE 4: VARIANT & ESTIMATION
+  // ==========================================
   return (
-    <div className="space-y-6 rounded-[2rem] bg-white p-6 shadow-sm ring-1 ring-black/5 sm:p-8">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-accent">Pilih Variant</p>
-          <h2 className="mt-2 text-3xl font-black text-primary">Halaman Variant</h2>
-          <p className="mt-2 text-sm text-slate-600">Variant dipilih di halaman ini, lalu estimasi taksiran ditampilkan di bawah.</p>
+    <div className="space-y-4 sm:space-y-6">
+      {/* Top Header */}
+      <div className="space-y-3 sm:space-y-4 rounded-2xl sm:rounded-[2rem] bg-white p-4 sm:p-6 shadow-sm ring-1 ring-black/5">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3 sm:pb-4">
+          <div>
+            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-accent">Langkah Terakhir</p>
+            <h2 className="mt-0.5 text-xl sm:text-3xl font-black text-primary">Taksiran &amp; Rincian Gadai</h2>
+            <p className="mt-0.5 text-xs sm:text-sm text-slate-500">Pilih spesifikasi/variant barang untuk melihat estimasi nilai pencairan.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => router.push('/simulasi/produk')}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold text-primary shadow-sm hover:bg-slate-50"
+          >
+            <ChevronLeft size={15} />
+            <span>Ganti Produk</span>
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => router.push('/simulasi/produk')}
-          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-primary shadow-sm"
-        >
-          <ChevronLeft size={16} /> Kembali
-        </button>
+
+        {/* Selection Summary Breadcrumb - Hanya Menampilkan Cabang Terpilih */}
+        {simulation.branch?.NamaCabang ? (
+          <div className="flex flex-wrap text-[11px] sm:text-xs text-slate-600">
+            <span className="rounded-lg bg-slate-100 px-2.5 py-1 font-medium">
+              Cabang: <strong className="text-primary">{simulation.branch.NamaCabang}</strong>
+            </span>
+          </div>
+        ) : null}
+
+        {/* Step Progress Bar Indicator */}
+        <SimulationStepProgressBar currentStep={4} />
       </div>
 
-      {selectedProduct ? (
-        <div className="space-y-4 rounded-2xl border border-border bg-slate-50 p-4">
-          <div>
-            <h3 className="text-lg font-semibold text-primary">{selectedProduct.name}</h3>
-            <p className="text-sm text-text-muted">Pilih variant untuk memuat estimasi harga.</p>
-          </div>
-
-          <div className="relative">
-            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-            <input
-              type="text"
-              value={variantSearchQuery}
-              onChange={e => setVariantSearchQuery(e.target.value)}
-              placeholder="Cari variant"
-              className="w-full rounded-lg border border-border py-3 pl-10 pr-4 focus:border-primary focus:outline-none"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            {filteredVariants.map(spec => {
-              const isSpecSelected = simulation.specification === spec.label
-
-              return (
-                <button
-                  key={spec.id}
-                  type="button"
-                  onClick={() => handleSelectVariant(spec)}
-                  className={`rounded-xl border-2 p-4 text-left transition-all ${
-                    isSpecSelected ? 'border-primary bg-primary/5' : 'border-border bg-white hover:border-primary hover:bg-primary/5'
-                  }`}
-                >
-                  <div className="font-semibold text-primary">{spec.label}</div>
-                  {spec.note ? <div className="mt-1 text-sm text-text-muted">{spec.note}</div> : null}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      ) : null}
-
-      <div className="rounded-2xl border border-border bg-white p-5 space-y-4">
-        <div className="grid grid-cols-2 gap-y-3 gap-x-4">
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Cabang</div>
-            <div className="mt-0.5 font-bold text-slate-800 text-sm">{simulation.branch?.NamaCabang || '-'}</div>
-          </div>
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Kategori</div>
-            <div className="mt-0.5 font-bold text-slate-800 text-sm">{simulation.category?.name || '-'}</div>
-          </div>
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Barang</div>
-            <div className="mt-0.5 font-bold text-slate-800 text-sm">{simulation.itemName || '-'}</div>
-          </div>
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Spesifikasi</div>
-            <div className="mt-0.5 font-bold text-slate-800 text-sm">{simulation.specification || '-'}</div>
-          </div>
-        </div>
-
-        <div className="rounded-xl bg-slate-50/80 p-4 sm:p-5 border border-slate-200/80">
-          <div className="text-xs text-slate-500 font-medium">Estimasi cair</div>
-          <div className="mt-1 text-2xl sm:text-3xl font-extrabold text-primary">
-            {estimateLoading || apiLoadState === 'loading' ? (
-              <span className="text-primary font-bold">Memuat harga...</span>
-            ) : (
-              selectedRangeText || '-'
-            )}
-          </div>
-        </div>
-
-        {estimateMessage ? <p className="text-sm text-text-muted">{estimateMessage}</p> : null}
-
-        {activePriceRange ? (() => {
-          const priceMin = activePriceRange.min ?? 0
-          const priceMax = activePriceRange.max ?? 0
-          return (
-          <div className="space-y-3 rounded-xl border border-border p-4">
-            <div className="rounded-xl border border-primary/10 bg-gradient-to-br from-primary/5 to-gray-50 p-4">
-              <div className="flex flex-wrap items-end justify-between gap-3">
+      {/* Main Responsive Grid: Mobile/Tablet 1-column stack, Desktop 2-column with sticky side panel */}
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-12 lg:items-start">
+        {/* Left Column: Variant Selection Cards */}
+        <div className="space-y-4 sm:space-y-6 lg:col-span-7">
+          {selectedProduct ? (
+            <div className="rounded-2xl sm:rounded-[2rem] bg-white p-4 sm:p-6 shadow-sm ring-1 ring-black/5 space-y-3 sm:space-y-4">
+              <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-xs uppercase tracking-wide text-text-muted">Nominal dipilih</div>
-                  <div className="mt-1 text-2xl font-bold text-primary">{formatCurrency(selectedLoanAmountResolved || priceMax)}</div>
+                  <h3 className="text-base sm:text-lg font-bold text-primary">{selectedProduct.name}</h3>
+                  <p className="text-xs text-slate-500">Pilih varian atau kapasitas yang sesuai:</p>
                 </div>
-                <div className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-primary shadow-sm">
-                  Maks. {formatCurrency(priceMax)}
-                </div>
+                <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] sm:text-xs font-bold text-blue-700">
+                  {selectedProduct.specs.length} Varian
+                </span>
               </div>
 
-              <input
-                type="range"
-                min={0}
-                max={getLoanSliderStepCount(priceMin, priceMax)}
-                step={1}
-                value={getSliderStepFromLoanAmount(
-                  selectedLoanAmountResolved || priceMax,
-                  priceMin,
-                  priceMax
-                )}
-                onChange={event =>
-                  setSelectedLoanAmount(
-                    getLoanAmountFromSliderStep(Number(event.target.value), priceMin, priceMax)
+              {/* Search Variant */}
+              <div className="relative">
+                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={variantSearchQuery}
+                  onChange={e => setVariantSearchQuery(e.target.value)}
+                  placeholder="Cari spesifikasi / kapasitas..."
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-4 text-xs sm:text-sm focus:border-primary focus:bg-white focus:outline-none"
+                />
+              </div>
+
+              {/* Variant Cards: Mobile portrait 2 col, mobile landscape/tablet/desktop 3 col */}
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5 md:grid-cols-3 xl:grid-cols-3">
+                {filteredVariants.map((spec: PawnCatalogSpec) => {
+                  const isSpecSelected = simulation.specification === spec.label
+
+                  return (
+                    <button
+                      key={spec.id}
+                      type="button"
+                      onClick={() => handleSelectVariant(spec)}
+                      className={`rounded-xl border-2 p-2.5 sm:p-4 text-left transition-all ${
+                        isSpecSelected
+                          ? 'border-primary bg-primary/5 ring-2 ring-primary/20 shadow-sm'
+                          : 'border-slate-200 bg-white hover:border-primary/60 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="font-bold text-xs sm:text-sm text-primary truncate">{spec.label}</div>
+                        {isSpecSelected && <span className="text-xs font-bold text-primary shrink-0">✓</span>}
+                      </div>
+                      {spec.note ? <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-slate-500 truncate">{spec.note}</div> : null}
+                    </button>
                   )
-                }
-                className="mt-5 w-full cursor-pointer accent-primary"
-              />
+                })}
+              </div>
+            </div>
+          ) : null}
+        </div>
 
-              <div className="mt-2 flex items-center justify-between gap-3 text-xs text-text-muted">
-                <span>{formatCurrency(priceMin)}</span>
-                <span>{formatCurrency(priceMax)}</span>
+        {/* Right Column / Side Panel: Summary & Valuation Calculation */}
+        <div className="space-y-4 lg:col-span-5 lg:sticky lg:top-24">
+          <div className="rounded-[2rem] bg-white p-4 sm:p-6 shadow-sm ring-1 ring-black/5 space-y-3 sm:space-y-4">
+            {/* 4-Item Grid Summary: 2 cols on mobile portrait, 4 cols on mobile landscape / tablet, 2 cols on desktop sidebar */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-y-2 sm:gap-y-3 gap-x-3 sm:gap-x-4 border-b border-slate-100 pb-3 sm:pb-4">
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Cabang</div>
+                <div className="mt-0.5 font-bold text-slate-800 text-xs sm:text-sm truncate">
+                  {simulation.branch?.NamaCabang || '-'}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Kategori</div>
+                <div className="mt-0.5 font-bold text-slate-800 text-xs sm:text-sm truncate">
+                  {simulation.category?.name || '-'}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Barang</div>
+                <div className="mt-0.5 font-bold text-slate-800 text-xs sm:text-sm truncate">
+                  {simulation.itemName || '-'}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Spesifikasi</div>
+                <div className="mt-0.5 font-bold text-slate-800 text-xs sm:text-sm truncate">
+                  {simulation.specification || '-'}
+                </div>
               </div>
             </div>
 
-
-            <div className="grid gap-3 md:grid-cols-2">
-              <div className="rounded-xl bg-primary/5 p-4 border border-primary/10">
-                <div className="text-xs uppercase tracking-wide text-text-muted">Tarif sewa modal</div>
-                <div className="mt-1 text-lg font-semibold text-primary">{formatCurrency(sewaModal)}</div>
-                <div className="mt-2 inline-flex rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white">30 hari</div>
-                <div className="mt-2 text-sm text-text-muted">30 hari dihitung 10% dari nominal pinjaman dan dibulatkan ke atas per Rp 500.</div>
-              </div>
-
-              <div className="rounded-xl border border-border p-4">
-                <div className="text-xs uppercase tracking-wide text-text-muted">Biaya admin</div>
-                <div className="mt-1 text-lg font-semibold text-primary">{formatCurrency(adminFee)}</div>
-                <div className="mt-2 text-sm text-text-muted">Dihitung 1% dari nominal pinjaman dan dibulatkan ke atas per Rp 500.</div>
+            {/* Estimasi Cair Box */}
+            <div className="rounded-xl bg-slate-50/90 p-4 sm:p-5 border border-slate-200/80">
+              <div className="text-xs text-slate-500 font-medium">Estimasi cair</div>
+              <div className="mt-1 text-2xl sm:text-3xl font-extrabold text-primary">
+                {estimateLoading || apiLoadState === 'loading' ? (
+                  <span className="text-primary font-bold">Memuat harga...</span>
+                ) : (
+                  selectedRangeText || '-'
+                )}
               </div>
             </div>
 
-            <div className="rounded-xl border border-border p-4">
-              <div className="text-xs uppercase tracking-wide text-text-muted">Rincian Estimasi</div>
-              <div className="mt-3 space-y-2 text-sm">
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-text-muted">Harga estimasi</span>
-                  <span className="text-right font-semibold text-primary">{selectedRangeText}</span>
+            {estimateMessage ? <p className="text-xs text-slate-500">{estimateMessage}</p> : null}
+
+            {/* Slider & Loan Details (Shown when price is resolved) */}
+            {activePriceRange ? (() => {
+              const priceMin = activePriceRange.min ?? 0
+              const priceMax = activePriceRange.max ?? 0
+              return (
+                <div className="space-y-4 pt-1">
+                  {/* Nominal Slider Card */}
+                  <div className="rounded-xl border border-primary/15 bg-gradient-to-br from-primary/5 to-slate-50 p-4">
+                    <div className="flex flex-wrap items-end justify-between gap-2">
+                      <div>
+                        <div className="text-[11px] uppercase tracking-wide text-slate-500 font-medium">Nominal Dipilih</div>
+                        <div className="mt-0.5 text-xl sm:text-2xl font-black text-primary">
+                          {formatCurrency(selectedLoanAmountResolved || priceMax)}
+                        </div>
+                      </div>
+                      <div className="rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-primary shadow-sm border border-slate-100">
+                        Maks. {formatCurrency(priceMax)}
+                      </div>
+                    </div>
+
+                    <input
+                      type="range"
+                      min={0}
+                      max={getLoanSliderStepCount(priceMin, priceMax)}
+                      step={1}
+                      value={getSliderStepFromLoanAmount(
+                        selectedLoanAmountResolved || priceMax,
+                        priceMin,
+                        priceMax
+                      )}
+                      onChange={event =>
+                        setSelectedLoanAmount(
+                          getLoanAmountFromSliderStep(Number(event.target.value), priceMin, priceMax)
+                        )
+                      }
+                      className="mt-4 w-full cursor-pointer accent-primary"
+                    />
+
+                    <div className="mt-1.5 flex items-center justify-between text-[11px] text-slate-400 font-medium">
+                      <span>{formatCurrency(priceMin)}</span>
+                      <span>{formatCurrency(priceMax)}</span>
+                    </div>
+                  </div>
+
+                  {/* Tarif Sewa Modal & Biaya Admin (2-Col) */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-xl bg-primary/5 p-3.5 border border-primary/10">
+                      <div className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Sewa Modal (30 Hari)</div>
+                      <div className="mt-1 text-base sm:text-lg font-bold text-primary">{formatCurrency(sewaModal)}</div>
+                      <div className="mt-1 text-[10px] text-slate-400">10% / 30 hari</div>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3.5">
+                      <div className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Biaya Admin</div>
+                      <div className="mt-1 text-base sm:text-lg font-bold text-primary">{formatCurrency(adminFee)}</div>
+                      <div className="mt-1 text-[10px] text-slate-400">1% dibulatkan</div>
+                    </div>
+                  </div>
+
+                  {/* Summary Breakdown */}
+                  <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2 text-xs">
+                    <div className="flex items-center justify-between text-slate-600">
+                      <span>Harga estimasi</span>
+                      <span className="font-semibold text-primary">{selectedRangeText}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-slate-600">
+                      <span>Pinjaman yang diajukan</span>
+                      <span className="font-semibold text-primary">{formatCurrency(selectedLoanAmountResolved || priceMax)}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-slate-600">
+                      <span>Sewa modal (30 hari)</span>
+                      <span className="font-semibold text-primary">{formatCurrency(sewaModal)}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-slate-600">
+                      <span>Biaya administrasi</span>
+                      <span className="font-semibold text-primary">{formatCurrency(adminFee)}</span>
+                    </div>
+                    <div className="mt-2 rounded-lg bg-slate-50 p-2.5 font-bold text-primary flex items-center justify-between border border-slate-100">
+                      <span>Total Biaya Awal</span>
+                      <span className="text-sm text-accent">{formatCurrency(sewaModal + adminFee)}</span>
+                    </div>
+                    <p className="text-xs font-bold text-red-600 text-left">* S&amp;K Berlaku</p>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-text-muted">Hasil estimasi yang dipilih</span>
-                  <span className="text-right font-semibold text-primary">{formatCurrency(selectedLoanAmountResolved || priceMax)}</span>
-                </div>
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-text-muted">Sewa modal</span>
-                  <span className="text-right font-semibold text-primary">{formatCurrency(sewaModal)}</span>
-                </div>
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-text-muted">Admin</span>
-                  <span className="text-right font-semibold text-primary">{formatCurrency(adminFee)}</span>
-                </div>
-              </div>
-              <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-sm font-semibold text-primary">
-                Total biaya awal estimasi: {formatCurrency(sewaModal + adminFee)}
-              </div>
-              <p className="mt-2 text-xs font-semibold text-red-600">*S&amp;K Berlaku</p>
+              )
+            })() : null}
+
+            {/* Action Buttons */}
+            <div className="pt-2 space-y-2">
+              <button
+                type="button"
+                onClick={handleProceedToBooking}
+                disabled={!simulation.branch || !simulation.category || !simulation.specification || estimateLoading || !activePriceRange || !selectedLoanAmountResolved}
+                className="w-full rounded-xl bg-accent px-5 py-3.5 text-sm sm:text-base font-bold text-white shadow-lg shadow-accent/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {estimateLoading ? 'Memuat estimasi...' : 'Ajukan Gadai Sekarang'}
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push('/simulasi/produk')}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"
+              >
+                Ganti Seri / Produk Lain
+              </button>
             </div>
           </div>
-          )
-        })() : null}
-      </div>
-
-      <div className="flex gap-3">
-        <button
-          type="button"
-          onClick={() => router.push('/simulasi/produk')}
-          className="flex-1 rounded-xl border border-border px-4 py-3 font-semibold text-primary"
-        >
-          Ubah Produk
-        </button>
-        <button
-          type="button"
-          onClick={handleProceedToBooking}
-          disabled={!simulation.branch || !simulation.category || !simulation.specification || estimateLoading || !activePriceRange || !selectedLoanAmountResolved}
-          className="flex-1 rounded-xl bg-primary px-4 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {estimateLoading ? 'Memuat estimasi...' : 'Estimasi Sekarang'}
-        </button>
+        </div>
       </div>
     </div>
   )

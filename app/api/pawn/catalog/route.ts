@@ -100,9 +100,9 @@ export async function GET() {
         .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name))
         .map(b => {
           const brandProducts = categoryProducts
-            .filter(p => p.brand_id === b.id)
+            .filter(p => p.brand_id === b.id && p.status === 'active')
             .map(p => {
-              const pVariants = variantsByProduct.get(p.id) || []
+              const pVariants = (variantsByProduct.get(p.id) || []).filter(v => v.status === 'active')
               return {
                 id: String(p.id),
                 category: cat.name.toUpperCase(),
@@ -123,6 +123,7 @@ export async function GET() {
                 }),
               }
             })
+            .filter(product => product.specs.length > 0)
 
           return {
             id: String(b.id),

@@ -62,7 +62,7 @@ export function BranchSelector({ branches, onSelectBranch, selectedBranch, helpe
 
           {helperText ? <p className="text-sm text-slate-500">{helperText}</p> : null}
 
-          <div className="max-h-72 space-y-2 overflow-auto pr-1">
+          <div className="max-h-52 sm:max-h-72 space-y-2 overflow-auto pr-1">
             {filteredBranches.map(branch => {
               const isSelected = selectedBranch?.id === branch.id
               return (
