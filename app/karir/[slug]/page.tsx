@@ -4,6 +4,7 @@ import { use, useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
   Clock3,
+  ExternalLink,
   GraduationCap,
   Mail,
   MapPin,
@@ -187,6 +188,20 @@ export default function CareerDetailPage({
                   >
                     Lamar Sekarang
                   </Link>
+                  {job.applicationUrl ? (
+                    <a
+                      href={job.applicationUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-5 flex h-11 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 text-sm font-bold text-white transition hover:bg-red-700 shadow-sm"
+                    >
+                      Lamar Sekarang <ExternalLink size={16} />
+                    </a>
+                  ) : (
+                    <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-center text-xs font-semibold text-amber-800">
+                      Link lamaran untuk posisi ini belum tersedia.
+                    </div>
+                  )}
 
                   <button
                     type="button"

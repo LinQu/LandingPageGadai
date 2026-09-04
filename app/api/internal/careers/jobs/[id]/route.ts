@@ -39,12 +39,10 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     return NextResponse.json({ error: 'Link lamaran wajib diisi sebelum lowongan dipublish.' }, { status: 400 })
   }
 
-  const placementDetail = String(body.placementDetail || '').trim() || null
-
   try {
-    await execute(`UPDATE job_positions SET title=?, slug=?, summary=?, description=?, responsibilities=?, qualifications=?, benefits=?, location_city=?, location_province=?, placement_detail=?, employment_type=?, work_mode=?, experience_level=?, education=?, salary_min=?, salary_max=?, application_deadline=?, application_url=?, published_at=?, status=?, updated_at=NOW() WHERE id=?`, [
+    await execute(`UPDATE job_positions SET title=?, slug=?, summary=?, description=?, responsibilities=?, qualifications=?, benefits=?, location_city=?, location_province=?, employment_type=?, work_mode=?, experience_level=?, education=?, salary_min=?, salary_max=?, application_deadline=?, application_url=?, published_at=?, status=?, updated_at=NOW() WHERE id=?`, [
       title, slug, String(body.summary).trim(), String(body.description).trim(), String(body.responsibilities || '').trim(), String(body.qualifications || '').trim(), String(body.benefits || '').trim(),
-      String(body.locationCity).trim(), String(body.locationProvince).trim(), placementDetail, String(body.employmentType || 'Full Time'), String(body.workMode || 'On Site'), String(body.experienceLevel || 'Fresh Graduate'), String(body.education || 'SMA/SMK'),
+      String(body.locationCity).trim(), String(body.locationProvince).trim(), String(body.employmentType || 'Full Time'), String(body.workMode || 'On Site'), String(body.experienceLevel || 'Fresh Graduate'), String(body.education || 'SMA/SMK'),
       body.salaryMin ? Number(body.salaryMin) : null, body.salaryMax ? Number(body.salaryMax) : null,
       body.applicationDeadline ? new Date(body.applicationDeadline) : null, applicationUrl,
       body.publishedAt ? new Date(body.publishedAt) : (status === 'published' ? new Date() : null), status, id,
