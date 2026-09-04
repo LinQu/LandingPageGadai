@@ -48,7 +48,7 @@ export const testimonials: Testimonial[] = [
     name: 'Siti Nurhaliza',
     role: 'Ibu Rumah Tangga',
     content: 'Layanan pelanggan Gadai Sakti sangat baik. Mereka memberikan penjelasan yang jelas dan tidak ada biaya tersembunyi. Sangat merekomendasikan!',
-    rating: 5,
+    rating: 4.8,
   },
   {
     id: '3',
@@ -62,7 +62,7 @@ export const testimonials: Testimonial[] = [
     name: 'Rini Kuswati',
     role: 'Freelancer',
     content: 'Sangat puas dengan pelayanan mereka. Staf memahami kondisi barang dan memberikan harga yang kompetitif.',
-    rating: 5,
+    rating: 4.9,
   },
 ]
 

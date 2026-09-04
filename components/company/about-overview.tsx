@@ -30,13 +30,24 @@ export function AboutOverview() {
               </p>
             </div>
 
-            <div className="mt-5 flex w-full max-w-[790px] items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-[0_8px_28px_rgba(15,23,42,0.06)] sm:gap-4">
-              <div className="flex h-10 w-12 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-base font-black tracking-tight text-accent sm:h-11 sm:w-14 sm:text-lg">
-                OJK
+            <div className="mt-5 flex w-full max-w-[790px] items-center gap-3.5 rounded-xl border border-slate-200 bg-white p-3.5 shadow-[0_8px_28px_rgba(15,23,42,0.06)] sm:gap-4 sm:p-4">
+              <div className="flex h-12 w-28 shrink-0 items-center justify-center rounded-lg bg-slate-50 p-2 border border-slate-100 shadow-sm sm:h-14 sm:w-36">
+                <Image
+                  src="/ojk.png"
+                  alt="Otoritas Jasa Keuangan"
+                  width={140}
+                  height={56}
+                  className="h-8 sm:h-9 w-auto object-contain"
+                />
               </div>
-              <p className="text-[10px] leading-4 text-text-muted sm:text-[11px] sm:leading-[1.15rem]">
-                Informasi legalitas dan nomor izin mengikuti data resmi perusahaan dan dapat ditempatkan pada bagian ini.
-              </p>
+              <div className="space-y-0.5">
+                <p className="text-xs font-bold text-primary sm:text-sm">
+                  Berizin &amp; Diawasi oleh Otoritas Jasa Keuangan (OJK)
+                </p>
+                <p className="text-[10px] leading-4 text-text-muted sm:text-xs">
+                  Seluruh layanan dan operasional Gadai Sakti resmi terdaftar serta diawasi oleh Otoritas Jasa Keuangan untuk memberikan jaminan keamanan transaksi bagi seluruh nasabah.
+                </p>
+              </div>
             </div>
           </div>
 

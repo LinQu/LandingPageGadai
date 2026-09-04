@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { Camera, Play, Users } from 'lucide-react'
 
@@ -23,10 +24,19 @@ export function Footer() {
             <p className="mt-5 max-w-md text-xs leading-5 text-white/72">
               Gadai Sakti hadir sebagai mitra finansial yang memberikan solusi dana tunai instan dengan proses yang mudah, taksiran akurat dan kompetitif, serta jaminan keamanan penuh atas barang berharga Anda.
             </p>
-            <div className="mt-5 inline-flex items-center gap-3 rounded-lg border border-white/15 bg-white/5 px-3 py-2">
-              <span className="text-sm font-extrabold">OJK<span className="text-accent">.</span></span>
-              <span className="text-[10px] leading-4 text-white/60">
-                Berizin &amp; Diawasi<br />Otoritas Jasa Keuangan
+            <div className="mt-5 inline-flex items-center gap-3 rounded-xl border border-white/15 bg-white/10 px-3.5 py-2 backdrop-blur-sm">
+              <div className="flex h-8 w-20 shrink-0 items-center justify-center rounded-md bg-white px-2 py-1 shadow-sm">
+                <Image
+                  src="/ojk.png"
+                  alt="Otoritas Jasa Keuangan"
+                  width={80}
+                  height={32}
+                  className="h-5 w-auto object-contain"
+                />
+              </div>
+              <span className="text-[10px] font-medium leading-tight text-white/80">
+                Berizin &amp; Diawasi oleh<br />
+                <strong className="font-bold text-white">Otoritas Jasa Keuangan</strong>
               </span>
             </div>
           </div>

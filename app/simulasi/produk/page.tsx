@@ -6,11 +6,9 @@ export default function SimulasiProdukPage() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-[#f7f8fb] py-10 sm:py-12">
-        <div className="site-container">
-          <div className="mx-auto max-w-5xl">
-            <SimulationForm stage="product" />
-          </div>
+      <main className="min-h-screen bg-[#f7f8fb] py-8 sm:py-10 lg:py-12">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <SimulationForm stage="product" />
         </div>
       </main>
       <Footer />

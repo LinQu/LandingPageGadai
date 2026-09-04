@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
   const benefits = String(body.benefits || '').trim()
   const locationCity = String(body.locationCity || '').trim()
   const locationProvince = String(body.locationProvince || '').trim()
+  const placementDetail = String(body.placementDetail || '').trim() || null
   if (!title || !slug || !summary || !description || !locationCity || !locationProvince) {
     return NextResponse.json({ error: 'Judul, ringkasan, deskripsi, dan lokasi wajib diisi.' }, { status: 400 })
   }
@@ -52,9 +53,9 @@ export async function POST(request: NextRequest) {
 
   try {
     const result = await execute(`INSERT INTO job_positions
-      (title, slug, summary, description, responsibilities, qualifications, benefits, location_city, location_province, employment_type, work_mode, experience_level, education, salary_min, salary_max, application_deadline, application_url, published_at, status, created_by)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
-      title, slug, summary, description, responsibilities, qualifications, benefits, locationCity, locationProvince,
+      (title, slug, summary, description, responsibilities, qualifications, benefits, location_city, location_province, placement_detail, employment_type, work_mode, experience_level, education, salary_min, salary_max, application_deadline, application_url, published_at, status, created_by)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+      title, slug, summary, description, responsibilities, qualifications, benefits, locationCity, locationProvince, placementDetail,
       String(body.employmentType || 'Full Time'), String(body.workMode || 'On Site'), String(body.experienceLevel || 'Fresh Graduate'), String(body.education || 'SMA/SMK'),
       body.salaryMin ? Number(body.salaryMin) : null, body.salaryMax ? Number(body.salaryMax) : null,
       body.applicationDeadline ? new Date(body.applicationDeadline) : null, applicationUrl,

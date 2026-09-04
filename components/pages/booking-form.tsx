@@ -19,7 +19,7 @@ export function BookingForm() {
   })
 
   useEffect(() => {
-    const data = localStorage.getItem('simulationData')
+    const data = localStorage.getItem('gadai_simulation_data') || localStorage.getItem('simulationData')
     if (data) {
       try {
         setSimulation(JSON.parse(data))

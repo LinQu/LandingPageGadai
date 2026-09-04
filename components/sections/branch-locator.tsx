@@ -5,6 +5,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
 import { ExternalLink, LocateFixed, Loader2, MapPin, Navigation, Search } from 'lucide-react'
 import { BranchMap } from '@/components/maps/branch-map'
 import { calculateDistance, getBranches } from '@/lib/services/branch.service'
+import { formatAddress } from '@/lib/utils/format-location'
 import type { Branch } from '@/lib/types'
 
 type UserLocation = {
@@ -195,7 +196,7 @@ export function BranchLocatorSection() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-bold text-primary">{selectedBranch.NamaCabang}</p>
-                  <p className="mt-1 text-xs leading-5 text-text-muted">{selectedBranch.Alamat}</p>
+                  <p className="mt-1 text-xs leading-5 text-text-muted">{formatAddress(selectedBranch.Alamat)}</p>
                   {selectedBranch.distance !== undefined ? (
                     <p className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-accent">
                       <Navigation size={13} /> Sekitar {selectedBranch.distance.toFixed(1)} km dari lokasi Anda

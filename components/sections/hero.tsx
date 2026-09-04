@@ -91,29 +91,30 @@ export function HeroSection() {
             <p className={styles.note}>
               *Estimasi awal dapat berubah setelah pemeriksaan fisik barang di cabang.
             </p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, delay: 0.1 }}
+              className={styles.highlights}
+            >
+              <div className={styles.highlightsGrid}>
+                {highlights.map(({ icon: Icon, title, description }) => (
+                  <div key={title} className={styles.highlightItem}>
+                    <div className={styles.highlightIcon}>
+                      <Icon size={19} strokeWidth={1.75} />
+                    </div>
+                    <div className={styles.highlightText}>
+                      <h2 className={styles.highlightTitle}>{title}</h2>
+                      <p className={styles.highlightDescription}>{description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
           </motion.div>
         </div>
       </div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.12 }}
-        className={styles.highlights}
-      >
-        <div className={styles.highlightsGrid}>
-          {highlights.map(({ icon: Icon, title, description }) => (
-            <div key={title} className={styles.highlightItem}>
-              <div className={styles.highlightIcon}>
-                <Icon size={22} strokeWidth={1.6} />
-              </div>
-              <span className={styles.highlightAccent} />
-              <h2 className={styles.highlightTitle}>{title}</h2>
-              <p className={styles.highlightDescription}>{description}</p>
-            </div>
-          ))}
-        </div>
-      </motion.div>
     </section>
   )
 }

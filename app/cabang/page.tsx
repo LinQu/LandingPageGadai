@@ -4,7 +4,6 @@ import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Building2,
-  ChevronDown,
   Clock3,
   LocateFixed,
   MapPinned,
@@ -13,9 +12,12 @@ import {
   Navigation,
   Phone,
   Search,
+  X,
 } from 'lucide-react'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
+import { SearchableCombobox } from '@/components/ui/searchable-combobox'
+import { formatAddress, formatLocationName } from '@/lib/utils/format-location'
 import { getBranches } from '@/lib/services/branch.service'
 import type { Branch } from '@/lib/types'
 
@@ -34,14 +36,11 @@ function getPaginationItems(currentPage: number, totalPages: number): Pagination
   let startPage = Math.max(1, currentPage - halfWindow)
   let endPage = startPage + windowSize - 1
 
-  // Saat masih di awal, pertahankan 1-5.
   if (currentPage <= halfWindow + 1) {
     startPage = 1
     endPage = windowSize
   }
 
-  // Jika window sudah menyentuh halaman sebelum terakhir, geser ke ujung
-  // supaya jumlah tombol tetap ringkas dan halaman terakhir ikut terlihat.
   if (endPage >= totalPages - 1) {
     endPage = totalPages
     startPage = Math.max(1, totalPages - windowSize + 1)
@@ -52,7 +51,6 @@ function getPaginationItems(currentPage: number, totalPages: number): Pagination
     (_, index) => startPage + index,
   )
 
-  // Selama halaman terakhir belum masuk window, tampilkan shortcut ke halaman terakhir.
   if (endPage < totalPages) {
     items.push('ellipsis-end', totalPages)
   }
@@ -92,10 +90,6 @@ function getGoogleMapsUrl(branch: Branch, userLocation: UserLocation | null): st
   return `https://www.google.com/maps/dir/?${params.toString()}`
 }
 
-function normalizeLabel(value: string) {
-  return value.replace(/([A-Z])([A-Z]{2,})/g, '$1 $2').replace(/\s+/g, ' ').trim()
-}
-
 function BranchVisual({ branch }: { branch: Branch }) {
   return (
     <div className="relative h-40 overflow-hidden rounded-xl bg-gradient-to-br from-[#bfe1f2] via-[#eaf6fb] to-[#9ac7df]">
@@ -112,7 +106,7 @@ function BranchVisual({ branch }: { branch: Branch }) {
           <span className="h-8 rounded-sm border border-slate-300 bg-[#cfe4ef]" />
         </div>
       </div>
-      <div className="absolute bottom-3 left-3 max-w-[78%] rounded-md bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-primary shadow-sm">
+      <div className="absolute bottom-3 left-3 max-w-[78%] rounded-md bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-primary shadow-sm truncate">
         {branch.NamaCabang}
       </div>
     </div>
@@ -222,7 +216,15 @@ export default function CabangPage() {
       if (selectedBranch && branch.NamaCabang !== selectedBranch) return false
 
       if (!query) return true
-      return [branch.NamaCabang, branch.Kota, branch.Provinsi, branch.Alamat]
+      return [
+        branch.NamaCabang,
+        branch.Kota,
+        formatLocationName(branch.Kota),
+        branch.Provinsi,
+        formatLocationName(branch.Provinsi),
+        branch.Alamat,
+        formatAddress(branch.Alamat),
+      ]
         .filter(Boolean)
         .some(value => value.toLowerCase().includes(query))
     })
@@ -268,6 +270,10 @@ export default function CabangPage() {
     setCurrentPage(1)
   }
 
+  const hasActiveFilters = Boolean(
+    selectedProvince || selectedCity || selectedBranch || activeSearch
+  )
+
   const requestLocation = () => {
     if (!navigator.geolocation) {
       setLocationMessage('Browser Anda tidak mendukung akses lokasi.')
@@ -310,7 +316,7 @@ export default function CabangPage() {
                 Temukan cabang Gadai Sakti terdekat dari lokasi Anda. Kami hadir lebih dekat untuk memberikan layanan gadai yang instan, terjamin, dan terpercaya.
               </p>
 
-              <form onSubmit={handleSearch} className="mt-7 flex max-w-2xl overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+              <form onSubmit={handleSearch} className="mt-7 flex max-w-2xl overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm focus-within:border-primary transition">
                 <Search className="ml-4 mt-3.5 shrink-0 text-slate-400" size={18} />
                 <input
                   value={searchInput}
@@ -318,9 +324,22 @@ export default function CabangPage() {
                   placeholder="Masukkan provinsi, kota, kecamatan, atau nama cabang"
                   className="min-w-0 flex-1 bg-transparent px-3 py-3 text-sm text-slate-700 outline-none placeholder:text-slate-400"
                 />
+                {searchInput ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchInput('')
+                      setActiveSearch('')
+                    }}
+                    className="mr-2 self-center text-slate-400 hover:text-slate-600 p-1"
+                    aria-label="Bersihkan pencarian"
+                  >
+                    <X size={16} />
+                  </button>
+                ) : null}
                 <button
                   type="submit"
-                  className="m-1.5 rounded-md bg-accent px-5 py-2 text-xs font-bold text-white shadow-sm transition hover:brightness-95"
+                  className="m-1.5 rounded-lg bg-accent px-5 py-2 text-xs font-bold text-white shadow-sm transition hover:brightness-95"
                 >
                   Cari Lokasi
                 </button>
@@ -366,47 +385,61 @@ export default function CabangPage() {
           </div>
         </section>
 
-        <section className="site-container py-8">
+        <section className="site-container py-8 pb-28 sm:pb-16">
           <div className="mb-7">
-            <p className="mb-2 text-xs font-semibold text-slate-500">Pilih Wilayah Pencarian</p>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <p className="text-xs font-semibold text-slate-500">Pilih Wilayah Pencarian</p>
+              {hasActiveFilters ? (
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="text-xs font-bold text-accent hover:underline inline-flex items-center gap-1"
+                >
+                  <X size={12} /> Reset Semua Filter
+                </button>
+              ) : null}
+            </div>
+
+            <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2.5">
               <button
                 type="button"
                 onClick={resetFilters}
-                className={`rounded-full border px-4 py-2 text-xs font-bold transition ${
-                  !selectedProvince && !selectedCity && !selectedBranch && !activeSearch
-                    ? 'border-primary bg-primary text-white'
-                    : 'border-primary/25 bg-white text-primary hover:border-primary'
+                className={`min-h-[44px] rounded-full border px-4 py-2.5 text-xs font-bold transition-all ${
+                  !hasActiveFilters
+                    ? 'border-primary bg-primary text-white shadow-sm'
+                    : 'border-primary/25 bg-white text-primary hover:border-primary hover:bg-slate-50'
                 }`}
               >
                 Semua
               </button>
 
-              <FilterSelect
+              <SearchableCombobox
                 label="Provinsi"
+                placeholder="Pilih Provinsi"
                 value={selectedProvince}
                 options={provinces}
+                formatLabel={formatLocationName}
                 onChange={value => {
                   setSelectedProvince(value)
                   setSelectedCity('')
                 }}
               />
-              <FilterSelect
-                label="Kota"
+
+              <SearchableCombobox
+                label="Kota / Kab."
+                placeholder="Pilih Kota / Kabupaten"
                 value={selectedCity}
                 options={cities}
+                formatLabel={formatLocationName}
                 onChange={setSelectedCity}
               />
-              <div
-                className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-400"
-                title="Data API saat ini belum menyediakan field kecamatan/kelurahan terpisah"
-              >
-                Kelurahan <ChevronDown size={13} />
-              </div>
-              <FilterSelect
-                label="Cabang"
+
+              <SearchableCombobox
+                label="Nama Cabang"
+                placeholder="Pilih Cabang"
                 value={selectedBranch}
                 options={branchNames}
+                formatLabel={opt => opt}
                 onChange={setSelectedBranch}
               />
             </div>
@@ -427,71 +460,73 @@ export default function CabangPage() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.04 }}
-                    className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_6px_18px_rgba(15,23,42,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(15,23,42,0.12)]"
+                    className="flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_6px_18px_rgba(15,23,42,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(15,23,42,0.12)]"
                   >
-                    <BranchVisual branch={branch} />
+                    <div>
+                      <BranchVisual branch={branch} />
 
-                    <div className="px-1 pb-1 pt-4">
-                      <h2 className="text-xl font-extrabold leading-tight text-primary">
-                        {branch.NamaCabang}
-                      </h2>
+                      <div className="px-1.5 pb-1 pt-4">
+                        <h2 className="text-xl font-extrabold leading-tight text-primary">
+                          {branch.NamaCabang}
+                        </h2>
 
-                      <div className="mt-3 space-y-2.5 text-xs leading-5 text-slate-600">
-                        <div className="flex items-start gap-2">
-                          <MapPin className="mt-0.5 shrink-0 text-accent" size={15} />
-                          <span className="font-semibold text-primary">
-                            {normalizeLabel(branch.Kota || branch.Provinsi)}
-                          </span>
-                        </div>
-                        <div className="flex items-start gap-2">
-                          <Navigation className="mt-0.5 shrink-0 text-slate-500" size={15} />
-                          <span>{branch.Alamat}</span>
-                        </div>
-                        {branch.Phone ? (
+                        <div className="mt-3.5 space-y-2.5 text-xs leading-5 text-slate-600">
                           <div className="flex items-start gap-2">
-                            <Phone className="mt-0.5 shrink-0 text-slate-500" size={15} />
-                            <span>{branch.Phone}</span>
+                            <MapPin className="mt-0.5 shrink-0 text-accent" size={15} />
+                            <span className="font-bold text-primary">
+                              {formatLocationName(branch.Kota || branch.Provinsi)}
+                            </span>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <Navigation className="mt-0.5 shrink-0 text-slate-400" size={15} />
+                            <span className="leading-relaxed text-slate-700">{formatAddress(branch.Alamat)}</span>
+                          </div>
+                          {branch.Phone ? (
+                            <div className="flex items-center gap-2">
+                              <Phone className="shrink-0 text-slate-400" size={15} />
+                              <span className="font-medium text-slate-700">{branch.Phone}</span>
+                            </div>
+                          ) : null}
+                          <div className="flex items-start gap-2">
+                            <Clock3 className="mt-0.5 shrink-0 text-slate-400" size={15} />
+                            <span className="text-slate-600">{branch.hours || 'Jam operasional: konfirmasi ke cabang'}</span>
+                          </div>
+                        </div>
+
+                        {branch.distance !== undefined ? (
+                          <div className="mt-3.5 inline-flex items-center gap-1.5 rounded-full bg-[#eef7fb] px-3 py-1.5 text-[11px] font-bold text-primary">
+                            <LocateFixed size={13} />
+                            ± {branch.distance.toFixed(1)} km dari lokasi Anda
                           </div>
                         ) : null}
-                        <div className="flex items-start gap-2">
-                          <Clock3 className="mt-0.5 shrink-0 text-slate-500" size={15} />
-                          <span>{branch.hours || 'Jam operasional: konfirmasi ke cabang'}</span>
-                        </div>
                       </div>
+                    </div>
 
-                      {branch.distance !== undefined ? (
-                        <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#eef7fb] px-3 py-1.5 text-[11px] font-bold text-primary">
-                          <LocateFixed size={13} />
-                          ± {branch.distance.toFixed(1)} km dari lokasi Anda
-                        </div>
-                      ) : null}
-
-                      <div className="mt-4 grid grid-cols-2 gap-2">
+                    <div className="mt-4 grid grid-cols-2 gap-2 px-1 pb-1">
+                      <a
+                        href={getGoogleMapsUrl(branch, userLocation)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl border border-primary px-3 py-2 text-xs font-bold text-primary transition hover:bg-primary/5"
+                      >
+                        <MapPinned size={15} />
+                        Detail Lokasi
+                      </a>
+                      {branch.Phone ? (
                         <a
-                          href={getGoogleMapsUrl(branch, userLocation)}
+                          href={getWhatsappUrl(branch)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-primary px-3 py-2.5 text-xs font-bold text-primary transition hover:bg-primary/5"
+                          className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl bg-accent px-3 py-2 text-xs font-bold text-white transition hover:brightness-95 shadow-sm"
                         >
-                          <MapPinned size={15} />
-                          Detail Lokasi
+                          <MessageCircle size={15} />
+                          Chat Admin
                         </a>
-                        {branch.Phone ? (
-                          <a
-                            href={getWhatsappUrl(branch)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-accent px-3 py-2.5 text-xs font-bold text-white transition hover:brightness-95"
-                          >
-                            <MessageCircle size={15} />
-                            Chat Admin
-                          </a>
-                        ) : (
-                          <span className="inline-flex items-center justify-center rounded-lg bg-slate-100 px-3 py-2.5 text-xs font-bold text-slate-400">
-                            Nomor belum tersedia
-                          </span>
-                        )}
-                      </div>
+                      ) : (
+                        <span className="inline-flex min-h-[40px] items-center justify-center rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-400">
+                          Nomor belum tersedia
+                        </span>
+                      )}
                     </div>
                   </motion.article>
                 ))}
@@ -503,7 +538,7 @@ export default function CabangPage() {
                     type="button"
                     onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
                     disabled={currentPage === 1}
-                    className="rounded-full border border-slate-200 px-4 py-2 text-xs font-bold text-primary disabled:cursor-not-allowed disabled:opacity-40"
+                    className="min-h-[38px] rounded-full border border-slate-200 px-4 py-2 text-xs font-bold text-primary disabled:cursor-not-allowed disabled:opacity-40 hover:border-primary/40 transition"
                   >
                     Prev
                   </button>
@@ -540,7 +575,7 @@ export default function CabangPage() {
                     type="button"
                     onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
                     disabled={currentPage === totalPages}
-                    className="rounded-full border border-slate-200 px-4 py-2 text-xs font-bold text-primary disabled:cursor-not-allowed disabled:opacity-40"
+                    className="min-h-[38px] rounded-full border border-slate-200 px-4 py-2 text-xs font-bold text-primary disabled:cursor-not-allowed disabled:opacity-40 hover:border-primary/40 transition"
                   >
                     Next
                   </button>
@@ -557,7 +592,7 @@ export default function CabangPage() {
             </div>
           )}
 
-          <div className="mt-8 flex flex-col gap-5 rounded-2xl bg-primary px-6 py-6 text-white shadow-lg sm:flex-row sm:items-center sm:justify-between lg:px-8">
+          <div className="mt-10 flex flex-col gap-5 rounded-2xl bg-primary px-6 py-6 text-white shadow-lg sm:flex-row sm:items-center sm:justify-between lg:px-8">
             <div className="flex items-center gap-4">
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-white/10">
                 <MapPinned size={32} />
@@ -573,13 +608,13 @@ export default function CabangPage() {
               <button
                 type="button"
                 onClick={resetFilters}
-                className="rounded-lg bg-white px-4 py-2.5 text-xs font-bold text-primary"
+                className="rounded-lg bg-white px-4 py-2.5 text-xs font-bold text-primary hover:bg-slate-100 transition"
               >
                 Lihat Semua Lokasi
               </button>
               <a
                 href="mailto:info@gadaisakti.id"
-                className="rounded-lg bg-accent px-4 py-2.5 text-xs font-bold text-white"
+                className="rounded-lg bg-accent px-4 py-2.5 text-xs font-bold text-white hover:brightness-95 transition"
               >
                 Hubungi Kami
               </a>
@@ -592,37 +627,3 @@ export default function CabangPage() {
   )
 }
 
-function FilterSelect({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string
-  value: string
-  options: string[]
-  onChange: (value: string) => void
-}) {
-  return (
-    <label className="relative inline-flex items-center">
-      <span className="sr-only">{label}</span>
-      <select
-        value={value}
-        onChange={event => onChange(event.target.value)}
-        className={`appearance-none rounded-full border py-2 pl-4 pr-8 text-xs font-bold outline-none transition ${
-          value
-            ? 'border-primary bg-primary text-white'
-            : 'border-primary/25 bg-white text-primary hover:border-primary'
-        }`}
-      >
-        <option value="">{label}</option>
-        {options.map(option => (
-          <option key={option} value={option} className="bg-white text-slate-800">
-            {normalizeLabel(option)}
-          </option>
-        ))}
-      </select>
-      <ChevronDown className={`pointer-events-none absolute right-3 ${value ? 'text-white' : 'text-primary'}`} size={13} />
-    </label>
-  )
-}

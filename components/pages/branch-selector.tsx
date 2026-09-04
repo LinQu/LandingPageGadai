@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { ChevronsUpDown, Search } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { formatAddress, formatLocationName } from '@/lib/utils/format-location'
 import type { Branch } from '@/lib/types'
 
 type BranchSelectorProps = {
@@ -62,7 +63,7 @@ export function BranchSelector({ branches, onSelectBranch, selectedBranch, helpe
 
           {helperText ? <p className="text-sm text-slate-500">{helperText}</p> : null}
 
-          <div className="max-h-72 space-y-2 overflow-auto pr-1">
+          <div className="max-h-52 sm:max-h-72 space-y-2 overflow-auto pr-1">
             {filteredBranches.map(branch => {
               const isSelected = selectedBranch?.id === branch.id
               return (
@@ -82,7 +83,7 @@ export function BranchSelector({ branches, onSelectBranch, selectedBranch, helpe
                   <div>
                     <div className="font-semibold text-primary">{branch.NamaCabang}</div>
                     <div className="mt-1 text-xs text-slate-500">
-                      {branch.Kota} • {branch.Alamat}
+                      {formatLocationName(branch.Kota)} • {formatAddress(branch.Alamat)}
                     </div>
                   </div>
                   {isSelected ? (
