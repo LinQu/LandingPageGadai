@@ -171,6 +171,7 @@ export interface CareerJob {
   benefits: string[]
   locationCity: string
   locationProvince: string
+  placementDetail?: string | null
   employmentType: string
   workMode: string
   experienceLevel: string

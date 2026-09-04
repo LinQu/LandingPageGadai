@@ -29,7 +29,10 @@ export default function TentangKamiPage() {
 
         <section className="border-y border-slate-100 bg-slate-50/50 py-10 md:py-14">
           <div className="site-container">
-            <div className="text-center"><h2 className="text-3xl font-extrabold text-primary">Mengapa <span className="border-b-2 border-accent pb-1">Memilih</span> Kami?</h2></div>
+            <div className="text-center">
+              <h2 className="text-3xl font-extrabold text-primary">Mengapa Memilih Kami?</h2>
+              <div className="mx-auto mt-2.5 h-1 w-14 rounded-full bg-accent" />
+            </div>
             <div className="mt-9 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {reasons.map(({ icon: Icon, title, text }) => (
                 <div key={title} className="text-center">
@@ -40,7 +43,10 @@ export default function TentangKamiPage() {
               ))}
             </div>
 
-            <div className="mt-12 text-center"><h2 className="text-3xl font-extrabold text-primary">Perjalanan <span className="border-b-2 border-accent pb-1">Kami</span></h2></div>
+            <div className="mt-14 text-center">
+              <h2 className="text-3xl font-extrabold text-primary">Perjalanan Kami</h2>
+              <div className="mx-auto mt-2.5 h-1 w-14 rounded-full bg-accent" />
+            </div>
             <div className="relative mt-10 grid gap-6 md:grid-cols-4 before:absolute before:left-[12%] before:right-[12%] before:top-5 before:hidden before:h-px before:bg-primary/35 md:before:block">
               {timeline.map((item, index) => (
                 <div key={item.year} className="relative text-center">

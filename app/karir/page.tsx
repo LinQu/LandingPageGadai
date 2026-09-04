@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, Clock3, GraduationCap, MapPin } from 'lucide-rea
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { CareerHero } from '@/components/career/career-hero'
+import { formatLocationName, formatPlacement } from '@/lib/utils/format-location'
 import { getCareerJobs } from '@/lib/services/career.service'
 
 const PAGE_SIZE = 12
@@ -52,7 +53,7 @@ export default async function CareerPage({ searchParams }: { searchParams: Searc
               </label>
               <label className="text-xs font-semibold text-primary">Lokasi Penempatan
                 <select name="location" defaultValue={location} className="mt-1 input-internal">
-                  <option value="">Semua Lokasi</option>{locations.map(item => <option key={item}>{item}</option>)}
+                  <option value="">Semua Lokasi</option>{locations.map(item => <option key={item} value={item}>{formatLocationName(item)}</option>)}
                 </select>
               </label>
               <label className="text-xs font-semibold text-primary">Pendidikan
@@ -69,7 +70,7 @@ export default async function CareerPage({ searchParams }: { searchParams: Searc
                 <article key={job.id} className="flex min-h-[230px] flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                   <h2 className="text-xl font-extrabold text-primary">{job.title}</h2>
                   <div className="mt-3 space-y-2 text-sm text-text-muted">
-                    <p className="flex items-center gap-2"><MapPin size={16} className="text-accent" /><span><strong className="font-semibold text-accent">Penempatan:</strong> {job.locationCity}</span></p>
+                    <p className="flex items-center gap-2 text-accent"><MapPin size={16} className="text-accent shrink-0" /><span className="font-bold text-accent"><strong className="font-bold text-accent">Penempatan:</strong> {formatPlacement(job.locationCity, job.placementDetail)}</span></p>
                     <p className="flex items-center gap-2"><Clock3 size={16} className="text-primary" /><span><strong className="font-medium">Pengalaman:</strong> {job.experienceLevel}</span></p>
                     <p className="flex items-center gap-2"><GraduationCap size={16} className="text-primary" /><span><strong className="font-medium">Pendidikan:</strong> {job.education}</span></p>
                   </div>

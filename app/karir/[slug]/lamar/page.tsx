@@ -1,10 +1,36 @@
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
+import { Header } from '@/components/header'
+import { Footer } from '@/components/footer'
+import { CareerHero } from '@/components/career/career-hero'
+import { ApplicationForm } from '@/components/career/application-form'
 import { getCareerJobBySlug } from '@/lib/services/career.service'
 
 export default async function ApplyCareerPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const job = await getCareerJobBySlug(slug)
   if (!job) notFound()
-  if (!job.applicationUrl) redirect(`/karir/${job.slug}`)
-  redirect(job.applicationUrl)
+
+  return (
+    <>
+      <Header />
+      <main className="bg-white">
+        <CareerHero />
+        <section className="py-10 md:py-14">
+          <div className="site-container">
+            <div className="text-center">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-accent">Lamaran Posisi: {job.title}</p>
+              <h1 className="mt-2 text-3xl font-extrabold text-primary md:text-4xl">Pengisian Biodata Pelamar</h1>
+              <p className="mx-auto mt-2 max-w-xl text-xs sm:text-sm text-text-muted">
+                Silakan lengkapi data diri Anda. Setelah formulir dikirim, Anda akan langsung diarahkan ke web karir untuk pengerjaan psikotes.
+              </p>
+            </div>
+            <div className="mt-8">
+              <ApplicationForm slug={job.slug} jobTitle={job.title} />
+            </div>
+          </div>
+        </section>
+      </main>
+      <Footer />
+    </>
+  )
 }

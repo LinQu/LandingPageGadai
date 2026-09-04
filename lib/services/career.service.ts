@@ -1,72 +1,40 @@
 import type { CareerJob } from '@/lib/types'
 import { careerSeed } from '@/lib/content/career-seed'
-import { isDatabaseConfigured, queryRows } from '@/lib/internal/db'
 
-type JobRow = {
-  id: number
-  title: string
-  slug: string
-  summary: string
-  description: string
-  responsibilities: string
-  qualifications: string
-  benefits: string
-  location_city: string
-  location_province: string
-  employment_type: string
-  work_mode: string
-  experience_level: string
-  education: string
-  salary_min: number | null
-  salary_max: number | null
-  application_deadline: string | null
-  application_url: string | null
-  published_at: string | null
-  status: 'draft' | 'published' | 'closed'
-}
-
-function lines(value: string) {
-  return String(value || '').split('\n').map(v => v.trim()).filter(Boolean)
-}
-
-function mapJob(row: JobRow): CareerJob {
+function reviveJob(raw: any): CareerJob {
   return {
-    id: String(row.id), title: row.title, slug: row.slug, summary: row.summary, description: row.description,
-    responsibilities: lines(row.responsibilities), qualifications: lines(row.qualifications), benefits: lines(row.benefits),
-    locationCity: row.location_city, locationProvince: row.location_province, employmentType: row.employment_type,
-    workMode: row.work_mode, experienceLevel: row.experience_level, education: row.education,
-    salaryMin: row.salary_min == null ? null : Number(row.salary_min), salaryMax: row.salary_max == null ? null : Number(row.salary_max),
-    applicationDeadline: row.application_deadline ? new Date(row.application_deadline) : null,
-    applicationUrl: row.application_url || null,
-    publishedAt: row.published_at ? new Date(row.published_at) : null, status: row.status,
+    ...raw,
+    id: String(raw.id),
+    applicationDeadline: raw.applicationDeadline ? new Date(raw.applicationDeadline) : null,
+    publishedAt: raw.publishedAt ? new Date(raw.publishedAt) : null,
+    salaryMin: raw.salaryMin == null ? null : Number(raw.salaryMin),
+    salaryMax: raw.salaryMax == null ? null : Number(raw.salaryMax),
+    responsibilities: Array.isArray(raw.responsibilities) ? raw.responsibilities : [],
+    qualifications: Array.isArray(raw.qualifications) ? raw.qualifications : [],
+    benefits: Array.isArray(raw.benefits) ? raw.benefits : [],
   }
 }
 
+async function fetchJson(path: string) {
+  const response = await fetch(path, { cache: 'no-store' })
+  if (!response.ok) throw new Error(`Request gagal: ${response.status}`)
+  return response.json()
+}
+
 export async function getCareerJobs(): Promise<CareerJob[]> {
-  if (!isDatabaseConfigured()) return careerSeed
   try {
-    const rows = await queryRows<JobRow>(`SELECT id, title, slug, summary, description, responsibilities, qualifications, benefits,
-      location_city, location_province, employment_type, work_mode, experience_level, education, salary_min, salary_max,
-      application_deadline, application_url, published_at, status FROM job_positions
-      WHERE status='published' AND (application_deadline IS NULL OR application_deadline >= NOW())
-      ORDER BY published_at DESC, created_at DESC`)
-    return rows.length ? rows.map(mapJob) : careerSeed
-  } catch (error) {
-    console.error('getCareerJobs fallback:', error)
+    const payload = await fetchJson('/api/careers')
+    return (payload.data || []).map(reviveJob)
+  } catch {
     return careerSeed
   }
 }
 
 export async function getCareerJobBySlug(slug: string): Promise<CareerJob | null> {
-  if (!isDatabaseConfigured()) return careerSeed.find(item => item.slug === slug) || null
   try {
-    const rows = await queryRows<JobRow>(`SELECT id, title, slug, summary, description, responsibilities, qualifications, benefits,
-      location_city, location_province, employment_type, work_mode, experience_level, education, salary_min, salary_max,
-      application_deadline, application_url, published_at, status FROM job_positions
-      WHERE slug=? AND status='published' AND (application_deadline IS NULL OR application_deadline >= NOW()) LIMIT 1`, [slug])
-    return rows[0] ? mapJob(rows[0]) : null
-  } catch (error) {
-    console.error('getCareerJobBySlug fallback:', error)
-    return careerSeed.find(item => item.slug === slug) || null
+    const payload = await fetchJson(`/api/careers/${encodeURIComponent(slug)}`)
+    return payload.data ? reviveJob(payload.data) : null
+  } catch {
+    return careerSeed.find(job => job.slug === slug) || null
   }
 }

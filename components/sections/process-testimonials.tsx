@@ -11,6 +11,7 @@ import {
   SearchCheck,
   Star,
 } from 'lucide-react'
+import { FractionalStarRating } from '@/components/ui/fractional-star-rating'
 import { getAverageRating, getTestimonials } from '@/lib/services/misc.service'
 import type { Testimonial } from '@/lib/types'
 
@@ -146,29 +147,64 @@ export function ProcessSection() {
           <h2 className="mt-2 text-3xl font-bold text-white sm:text-4xl">4 Langkah Mudah Pencairan</h2>
         </motion.div>
 
-        <div className="relative mt-11 grid gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-12">
-          <div className="absolute left-[8%] right-[8%] top-9 hidden border-t border-dashed border-white/60 lg:block" />
-          {processSteps.map(({ number, icon: Icon, title, description }, index) => (
-            <motion.div
-              key={title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.08 }}
-              className="relative z-10 pt-6"
-            >
-              <div className="absolute left-1/2 top-0 flex h-16 w-16 -translate-x-1/2 items-center justify-center rounded-full border-4 border-primary bg-accent text-white shadow-md">
-                <Icon size={27} strokeWidth={1.7} />
-                <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[11px] font-bold text-accent shadow">
-                  {number}
-                </span>
-              </div>
-              <div className="mt-8 min-h-[168px] rounded-lg bg-white px-5 pb-5 pt-11 text-center shadow-lg shadow-slate-950/20">
-                <h3 className="text-sm font-bold text-primary">{title}</h3>
-                <p className="mt-3 text-xs leading-5 text-text-muted">{description}</p>
-              </div>
-            </motion.div>
-          ))}
+        <div className="relative mt-11 grid gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8 xl:gap-12">
+          {/* Continuous Desktop Timeline Connector: Centered from Node 1 (12.5%) to Node 4 (87.5%) at vertical center (56px) */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute left-[12.5%] right-[12.5%] top-[56px] z-0 hidden -translate-y-1/2 border-t-2 border-dashed border-white/60 lg:block"
+          />
+
+          {/* Tablet Row 1 Connector: Centered between Node 1 (25%) and Node 2 (75%) */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute left-[25%] right-[25%] top-[56px] z-0 hidden -translate-y-1/2 border-t-2 border-dashed border-white/60 sm:block lg:hidden"
+          />
+
+          {processSteps.map(({ number, icon: Icon, title, description }, index) => {
+            const isLast = index === processSteps.length - 1
+
+            return (
+              <motion.div
+                key={title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.08 }}
+                className="relative z-10 pt-6"
+              >
+                {/* Tablet Row 2 Connector: Step 3 -> Step 4 at vertical center (56px) */}
+                {index === 2 && (
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute left-1/2 top-[56px] z-0 hidden w-[calc(100%+2rem)] -translate-y-1/2 border-t-2 border-dashed border-white/60 sm:block lg:hidden"
+                  />
+                )}
+
+                {/* Vertical Connector Line for Mobile (< sm) - from center of this circle down to next circle */}
+                {!isLast && (
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute left-1/2 top-[56px] z-0 w-0 -translate-x-1/2 border-l-2 border-dashed border-white/60 sm:hidden"
+                    style={{ height: 'calc(100% + 2rem)' }}
+                  />
+                )}
+
+                {/* Circle Step Badge (64x64px, vertical center at 24px + 32px = 56px) */}
+                <div className="relative z-10 mx-auto flex h-16 w-16 items-center justify-center rounded-full border-4 border-primary bg-accent text-white shadow-md">
+                  <Icon size={27} strokeWidth={1.7} />
+                  <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[11px] font-bold text-accent shadow">
+                    {number}
+                  </span>
+                </div>
+
+                {/* Step Card Content */}
+                <div className="mt-8 min-h-[168px] rounded-lg bg-white px-5 pb-5 pt-11 text-center shadow-lg shadow-slate-950/20">
+                  <h3 className="text-sm font-bold text-primary">{title}</h3>
+                  <p className="mt-3 text-xs leading-5 text-text-muted">{description}</p>
+                </div>
+              </motion.div>
+            )
+          })}
         </div>
       </div>
     </section>
@@ -230,10 +266,8 @@ export function TestimonialsSection() {
             <div className="text-7xl font-bold tracking-[-0.06em] text-primary sm:text-8xl">
               <AnimatedCounter value={averageRating} decimals={1} duration={1250} />
             </div>
-            <div className="mt-3 flex justify-center gap-1">
-              {Array.from({ length: 5 }, (_, index) => (
-                <Star key={index} size={28} className="fill-amber-400 text-amber-400" />
-              ))}
+            <div className="mt-3 flex justify-center">
+              <FractionalStarRating rating={averageRating} size={28} />
             </div>
             <p className="mt-3 text-xs font-medium text-text-muted">Rating Berdasarkan Ulasan Pelanggan</p>
 
@@ -294,10 +328,12 @@ export function TestimonialsSection() {
                             <h3 className="text-xs font-bold text-slate-800">{testimonial.name}</h3>
                             <p className="text-[10px] text-slate-400">{testimonial.role}</p>
                           </div>
-                          <div className="flex gap-0.5">
-                            {Array.from({ length: testimonial.rating }, (_, index) => (
-                              <Star key={index} size={11} className="fill-amber-400 text-amber-400" />
-                            ))}
+                          <div>
+                            <FractionalStarRating
+                              rating={testimonial.rating}
+                              size={12}
+                              gapClass="gap-0.5"
+                            />
                           </div>
                         </div>
                         <p className="mt-2 text-xs leading-5 text-text-muted">{testimonial.content}</p>

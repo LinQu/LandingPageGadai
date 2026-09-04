@@ -15,7 +15,16 @@ const baseQualifications = [
 
 const baseBenefits = ['Gaji kompetitif', 'Jenjang karier', 'Bonus & insentif', 'Pelatihan & pengembangan', 'BPJS Kesehatan & Ketenagakerjaan']
 
-function job(id: number, title: string, city: string, province: string, education: string, experience: string, summary: string): CareerJob {
+function job(
+  id: number,
+  title: string,
+  city: string,
+  province: string,
+  education: string,
+  experience: string,
+  summary: string,
+  placementDetail?: string
+): CareerJob {
   return {
     id: String(id),
     title,
@@ -34,6 +43,7 @@ function job(id: number, title: string, city: string, province: string, educatio
     benefits: baseBenefits,
     locationCity: city,
     locationProvince: province,
+    placementDetail: placementDetail || null,
     employmentType: 'Full Time',
     workMode: 'On Site',
     experienceLevel: experience,
@@ -47,16 +57,16 @@ function job(id: number, title: string, city: string, province: string, educatio
 }
 
 export const careerSeed: CareerJob[] = [
-  job(1, 'Kepala Outlet Cabang', 'Semarang', 'Jawa Tengah', 'SMA/SMK', 'Tanpa Pengalaman / Fresh Graduate', 'Mengelola tim outlet untuk mencapai target, memastikan operasional efektif, dan menjaga kualitas pelayanan.'),
-  job(2, 'Penaksir Barang Elektronik', 'Jakarta Barat', 'DKI Jakarta', 'SMA/SMK', '1 tahun', 'Melakukan pemeriksaan awal kondisi barang elektronik dan mendukung proses taksiran sesuai SOP.'),
-  job(3, 'Customer Service Outlet', 'Bekasi', 'Jawa Barat', 'SMA/SMK', 'Fresh Graduate', 'Melayani kebutuhan informasi nasabah dan membantu proses administrasi transaksi di outlet.'),
-  job(4, 'Admin Outlet', 'Tangerang', 'Banten', 'SMA/SMK', 'Fresh Graduate', 'Mengelola administrasi outlet, dokumen transaksi, dan pencatatan operasional harian.'),
-  job(5, 'Kepala Outlet Cabang', 'Yogyakarta', 'D.I. Yogyakarta', 'SMA/SMK', '1-2 tahun', 'Mengelola tim outlet dan menjaga pencapaian target layanan serta operasional cabang.'),
-  job(6, 'Marketing Area', 'Surabaya', 'Jawa Timur', 'D3/S1', '1 tahun', 'Menjalankan aktivitas pemasaran area untuk meningkatkan awareness dan kunjungan outlet.'),
-  job(7, 'Customer Service Outlet', 'Bandung', 'Jawa Barat', 'SMA/SMK', 'Fresh Graduate', 'Memberikan pelayanan informasi yang ramah, akurat, dan sesuai prosedur perusahaan.'),
-  job(8, 'Admin Outlet', 'Solo', 'Jawa Tengah', 'SMA/SMK', 'Fresh Graduate', 'Menangani administrasi outlet dan memastikan kelengkapan dokumen operasional.'),
-  job(9, 'Kepala Outlet Cabang', 'Makassar', 'Sulawesi Selatan', 'SMA/SMK', '1-2 tahun', 'Memimpin operasional cabang, pembinaan tim, dan pencapaian target layanan.'),
-  job(10, 'Penaksir Barang Elektronik', 'Depok', 'Jawa Barat', 'SMA/SMK', '1 tahun', 'Melakukan pemeriksaan barang dan mendukung proses taksiran yang akurat sesuai prosedur.'),
-  job(11, 'Marketing Area', 'Semarang', 'Jawa Tengah', 'D3/S1', 'Fresh Graduate', 'Mendukung program pemasaran lokal dan aktivitas akuisisi nasabah secara terukur.'),
-  job(12, 'Customer Service Outlet', 'Tangerang Selatan', 'Banten', 'SMA/SMK', 'Fresh Graduate', 'Menangani pertanyaan nasabah, administrasi ringan, dan dukungan layanan cabang.'),
+  job(1, 'Kepala Outlet Cabang', 'Semarang', 'Jawa Tengah', 'SMA/SMK', 'Tanpa Pengalaman / Fresh Graduate', 'Mengelola tim outlet untuk mencapai target, memastikan operasional efektif, dan menjaga kualitas pelayanan.', 'Sudirman'),
+  job(2, 'Penaksir Barang Elektronik', 'Jakarta Barat', 'DKI Jakarta', 'SMA/SMK', '1 tahun', 'Melakukan pemeriksaan awal kondisi barang elektronik dan mendukung proses taksiran sesuai SOP.', 'Slipi'),
+  job(3, 'Customer Service Outlet', 'Bekasi', 'Jawa Barat', 'SMA/SMK', 'Fresh Graduate', 'Melayani kebutuhan informasi nasabah dan membantu proses administrasi transaksi di outlet.', 'Juanda'),
+  job(4, 'Admin Outlet', 'Tangerang', 'Banten', 'SMA/SMK', 'Fresh Graduate', 'Mengelola administrasi outlet, dokumen transaksi, dan pencatatan operasional harian.', 'Cikokol'),
+  job(5, 'Kepala Outlet Cabang', 'Yogyakarta', 'D.I. Yogyakarta', 'SMA/SMK', '1-2 tahun', 'Mengelola tim outlet dan menjaga pencapaian target layanan serta operasional cabang.', 'Malioboro'),
+  job(6, 'Marketing Area', 'Surabaya', 'Jawa Timur', 'D3/S1', '1 tahun', 'Menjalankan aktivitas pemasaran area untuk meningkatkan awareness dan kunjungan outlet.', 'Rungkut'),
+  job(7, 'Customer Service Outlet', 'Bandung', 'Jawa Barat', 'SMA/SMK', 'Fresh Graduate', 'Memberikan pelayanan informasi yang ramah, akurat, dan sesuai prosedur perusahaan.', 'Dago'),
+  job(8, 'Admin Outlet', 'Kab. Tegal', 'Jawa Tengah', 'SMA/SMK', 'Fresh Graduate', 'Menangani administrasi outlet dan memastikan kelengkapan dokumen operasional.', 'Mejasem Barat'),
+  job(9, 'Kepala Outlet Cabang', 'Makassar', 'Sulawesi Selatan', 'SMA/SMK', '1-2 tahun', 'Memimpin operasional cabang, pembinaan tim, dan pencapaian target layanan.', 'Panakkukang'),
+  job(10, 'Penaksir Barang Elektronik', 'Depok', 'Jawa Barat', 'SMA/SMK', '1 tahun', 'Melakukan pemeriksaan barang dan mendukung proses taksiran yang akurat sesuai prosedur.', 'Margonda'),
+  job(11, 'Marketing Area', 'Semarang', 'Jawa Tengah', 'D3/S1', 'Fresh Graduate', 'Mendukung program pemasaran lokal dan aktivitas akuisisi nasabah secara terukur.', 'Banyumanik'),
+  job(12, 'Customer Service Outlet', 'Tangerang Selatan', 'Banten', 'SMA/SMK', 'Fresh Graduate', 'Menangani pertanyaan nasabah, administrasi ringan, dan dukungan layanan cabang.', 'BSD Serpong'),
 ]

@@ -38,9 +38,9 @@ export async function getTestimonialsByRating(minRating: number): Promise<Testim
 }
 
 export function getAverageRating(): number {
-  if (testimonials.length === 0) return 0
+  if (testimonials.length === 0) return 4.9
   const sum = testimonials.reduce((acc, t) => acc + t.rating, 0)
-  return sum / testimonials.length
+  return Math.round((sum / testimonials.length) * 10) / 10
 }
 
 // ============ ARCHIVE ============

@@ -2,6 +2,25 @@ import fs from 'fs'
 import path from 'path'
 import mysql from 'mysql2/promise'
 
+function loadEnvFile(filePath) {
+  if (!fs.existsSync(filePath)) return
+  const content = fs.readFileSync(filePath, 'utf8')
+  for (const line of content.split('\n')) {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith('#')) continue
+    const eqIdx = trimmed.indexOf('=')
+    if (eqIdx <= 0) continue
+    const key = trimmed.slice(0, eqIdx).trim()
+    const val = trimmed.slice(eqIdx + 1).trim().replace(/^["']|["']$/g, '')
+    if (!process.env[key]) {
+      process.env[key] = val
+    }
+  }
+}
+
+loadEnvFile(path.join(process.cwd(), '.env.local'))
+loadEnvFile(path.join(process.cwd(), '.env'))
+
 async function runMigration() {
   const host = process.env.DB_HOST || '127.0.0.1'
   const port = Number(process.env.DB_PORT || 3306)
@@ -37,6 +56,26 @@ async function runMigration() {
     }
   } catch (colErr) {
     console.warn('Column check warning:', colErr.message)
+  }
+
+  // Ensure placement_detail and application_url exist on job_positions
+  try {
+    const [jobCols] = await db.query(
+      `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'job_positions'`,
+      [database]
+    )
+    const colNames = jobCols.map(c => c.COLUMN_NAME)
+    if (!colNames.includes('placement_detail')) {
+      console.log('Adding missing column placement_detail to job_positions...')
+      await db.query(`ALTER TABLE job_positions ADD COLUMN placement_detail VARCHAR(255) NULL AFTER location_province`)
+    }
+    if (!colNames.includes('application_url')) {
+      console.log('Adding missing column application_url to job_positions...')
+      await db.query(`ALTER TABLE job_positions ADD COLUMN application_url VARCHAR(1000) NULL AFTER application_deadline`)
+    }
+    console.log('job_positions columns verified:', colNames)
+  } catch (jobErr) {
+    console.warn('Job positions column check warning:', jobErr.message)
   }
 
   // Ensure pawn_category_brands table exists and backfill from pawn_products
