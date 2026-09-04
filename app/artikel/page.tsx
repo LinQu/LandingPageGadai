@@ -47,7 +47,7 @@ export default function ArtikelPage() {
       <Header />
       <main className="min-h-screen bg-white">
         <section className="border-b border-slate-100 py-10 md:py-14">
-          <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+          <div className="site-container">
             <div className="text-center">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Artikel Gadai Sakti</p>
               <h1 className="mt-2 text-3xl font-extrabold uppercase tracking-wide text-primary md:text-5xl">
@@ -74,7 +74,7 @@ export default function ArtikelPage() {
         </section>
 
         <section className="py-10 md:py-14">
-          <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+          <div className="site-container">
             {loading ? (
               <div className="py-24 text-center text-sm text-text-muted">Memuat artikel...</div>
             ) : visible.length ? (

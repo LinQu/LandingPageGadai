@@ -37,12 +37,12 @@ export function Header() {
         isScrolled ? 'shadow-lg shadow-slate-950/10' : ''
       }`}
     >
-      <nav className="mx-auto flex h-[74px] max-w-7xl items-center justify-between px-5 sm:px-6 lg:px-8">
+      <nav className="site-container flex h-[72px] items-center justify-between">
         <Link href="/" className="flex shrink-0 items-center" aria-label="Gadai Sakti - Beranda">
           <img
             src="/logo.png"
             alt="Gadai Sakti"
-            className="block h-auto w-[180px] object-contain sm:w-[205px] lg:w-[225px] xl:w-[240px]"
+            className="block h-auto w-[154px] object-contain sm:w-[168px] lg:w-[188px] xl:w-[198px]"
           />
         </Link>
 
@@ -80,8 +80,8 @@ export function Header() {
       </nav>
 
       {isOpen ? (
-        <div className="border-t border-white/10 bg-primary px-5 pb-5 lg:hidden">
-          <div className="mx-auto flex max-w-7xl flex-col gap-1 pt-3">
+        <div className="border-t border-white/10 bg-primary pb-5 lg:hidden">
+          <div className="site-container flex flex-col gap-1 pt-3">
             {navItems.map(item => (
               <Link
                 key={item.label}

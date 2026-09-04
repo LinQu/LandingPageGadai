@@ -178,6 +178,7 @@ export interface CareerJob {
   salaryMin?: number | null
   salaryMax?: number | null
   applicationDeadline?: Date | null
+  applicationUrl?: string | null
   publishedAt?: Date | null
   status: JobStatus
 }

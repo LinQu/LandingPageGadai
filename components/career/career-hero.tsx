@@ -2,7 +2,7 @@ export function CareerHero() {
   return (
     <section className="border-b border-slate-200 bg-[#f4f5f6]">
       <div
-        className="relative mx-auto min-h-[315px] max-w-7xl overflow-hidden bg-cover bg-center"
+        className="site-container relative min-h-[315px] overflow-hidden bg-cover bg-center"
         style={{
           backgroundImage: "url('/Moodboard Web GADAII 1 -200kb.jpeg')",
         }}

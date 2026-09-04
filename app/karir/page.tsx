@@ -43,7 +43,7 @@ export default async function CareerPage({ searchParams }: { searchParams: Searc
       <main className="bg-white">
         <CareerHero />
         <section className="relative z-10 -mt-12 pb-12 md:-mt-11 md:pb-16">
-          <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+          <div className="site-container">
             <form className="grid gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-lg md:grid-cols-[1fr_1fr_1fr_auto_auto] md:items-end">
               <label className="text-xs font-semibold text-primary">Nama Posisi
                 <select name="position" defaultValue={position} className="mt-1 input-internal">

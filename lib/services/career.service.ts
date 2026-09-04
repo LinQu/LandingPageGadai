@@ -20,6 +20,7 @@ type JobRow = {
   salary_min: number | null
   salary_max: number | null
   application_deadline: string | null
+  application_url: string | null
   published_at: string | null
   status: 'draft' | 'published' | 'closed'
 }
@@ -36,6 +37,7 @@ function mapJob(row: JobRow): CareerJob {
     workMode: row.work_mode, experienceLevel: row.experience_level, education: row.education,
     salaryMin: row.salary_min == null ? null : Number(row.salary_min), salaryMax: row.salary_max == null ? null : Number(row.salary_max),
     applicationDeadline: row.application_deadline ? new Date(row.application_deadline) : null,
+    applicationUrl: row.application_url || null,
     publishedAt: row.published_at ? new Date(row.published_at) : null, status: row.status,
   }
 }
@@ -45,7 +47,7 @@ export async function getCareerJobs(): Promise<CareerJob[]> {
   try {
     const rows = await queryRows<JobRow>(`SELECT id, title, slug, summary, description, responsibilities, qualifications, benefits,
       location_city, location_province, employment_type, work_mode, experience_level, education, salary_min, salary_max,
-      application_deadline, published_at, status FROM job_positions
+      application_deadline, application_url, published_at, status FROM job_positions
       WHERE status='published' AND (application_deadline IS NULL OR application_deadline >= NOW())
       ORDER BY published_at DESC, created_at DESC`)
     return rows.length ? rows.map(mapJob) : careerSeed
@@ -60,7 +62,7 @@ export async function getCareerJobBySlug(slug: string): Promise<CareerJob | null
   try {
     const rows = await queryRows<JobRow>(`SELECT id, title, slug, summary, description, responsibilities, qualifications, benefits,
       location_city, location_province, employment_type, work_mode, experience_level, education, salary_min, salary_max,
-      application_deadline, published_at, status FROM job_positions
+      application_deadline, application_url, published_at, status FROM job_positions
       WHERE slug=? AND status='published' AND (application_deadline IS NULL OR application_deadline >= NOW()) LIMIT 1`, [slug])
     return rows[0] ? mapJob(rows[0]) : null
   } catch (error) {

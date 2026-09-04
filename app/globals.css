@@ -1276,3 +1276,70 @@ body {
     transition: none !important;
   }
 }
+
+/* Shared public layout width: aligns public pages, sections, header, and footer.
+   Homepage hero keeps its own full-bleed responsive layout.
+   The inset changes gradually by device class/orientation so the layout never feels
+   too cramped on small screens or too empty on wide monitors. */
+.site-container {
+  width: calc(100% - 2rem);
+  max-width: 1560px;
+  margin-inline: auto;
+}
+
+/* Larger phones */
+@media (min-width: 480px) {
+  .site-container {
+    width: calc(100% - 2.5rem);
+  }
+}
+
+/* Small tablets / large phones */
+@media (min-width: 640px) {
+  .site-container {
+    width: calc(100% - 3rem);
+  }
+}
+
+/* Tablet portrait keeps comfortable side gutters. */
+@media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait) {
+  .site-container {
+    width: calc(100% - 4rem);
+  }
+}
+
+/* Tablet landscape needs a little more usable horizontal room. */
+@media (min-width: 768px) and (max-width: 1199px) and (orientation: landscape) {
+  .site-container {
+    width: 92%;
+  }
+}
+
+/* Laptop and regular desktop: balanced inset, matching the approved visual spacing. */
+@media (min-width: 1024px) {
+  .site-container {
+    width: 88%;
+  }
+}
+
+/* Medium desktop: keep enough breathing room while allowing wide content grids. */
+@media (min-width: 1280px) {
+  .site-container {
+    width: 88%;
+  }
+}
+
+/* Large desktop / wide monitor. */
+@media (min-width: 1536px) {
+  .site-container {
+    width: 86%;
+  }
+}
+
+/* Ultra-wide screens stop growing beyond the readable site width. */
+@media (min-width: 1920px) {
+  .site-container {
+    width: 84%;
+    max-width: 1560px;
+  }
+}

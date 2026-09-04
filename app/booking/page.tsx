@@ -9,7 +9,8 @@ export default function BookingPage() {
     <>
       <Header />
       <main className="min-h-screen bg-bg-light py-12">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="site-container">
+          <div className="mx-auto max-w-2xl">
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-primary mb-2">Konfirmasi Pesanan</h1>
             <p className="text-text-muted">
@@ -17,6 +18,7 @@ export default function BookingPage() {
             </p>
           </div>
           <BookingForm />
+          </div>
         </div>
       </main>
       <Footer />
