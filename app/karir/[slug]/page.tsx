@@ -1,6 +1,5 @@
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { Clock3, GraduationCap, Mail, MapPin, Share2, WalletCards, MessageCircle } from 'lucide-react'
+import { Clock3, ExternalLink, GraduationCap, Mail, MapPin, Share2, WalletCards, MessageCircle } from 'lucide-react'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { CareerHero } from '@/components/career/career-hero'
@@ -42,7 +41,15 @@ export default async function CareerDetailPage({ params }: { params: Promise<{ s
                     <Info icon={GraduationCap} label="Pendidikan" value={job.education} />
                     <Info icon={WalletCards} label="Estimasi Gaji" value={job.salaryMin || job.salaryMax ? `${rupiah(job.salaryMin)} - ${rupiah(job.salaryMax)}` : 'Sesuai kebijakan perusahaan'} />
                   </dl>
-                  <Link href={`/karir/${job.slug}/lamar`} className="mt-5 flex h-11 items-center justify-center rounded-md bg-red-600 px-4 text-sm font-bold text-white hover:bg-red-700">Lamar Sekarang</Link>
+                  {job.applicationUrl ? (
+                    <a href={job.applicationUrl} className="mt-5 flex h-11 items-center justify-center gap-2 rounded-md bg-red-600 px-4 text-sm font-bold text-white hover:bg-red-700">
+                      Lamar Sekarang <ExternalLink size={16} />
+                    </a>
+                  ) : (
+                    <div className="mt-5 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-center text-xs font-semibold text-amber-800">
+                      Link lamaran untuk posisi ini belum tersedia.
+                    </div>
+                  )}
                   <button type="button" className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-md border border-slate-300 text-sm font-semibold text-primary"><Share2 size={17} /> Bagikan Lowongan</button>
                 </div>
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
