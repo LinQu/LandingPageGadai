@@ -1,5 +1,4 @@
 import type { Article } from '../types'
-import { articleSeed } from '../content/article-seed'
 
 function reviveArticle(raw: any): Article {
   return {
@@ -21,7 +20,7 @@ export async function getArticles(): Promise<Article[]> {
     const payload = await fetchJson('/api/articles')
     return (payload.data || []).map(reviveArticle)
   } catch {
-    return articleSeed.slice().sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime())
+    return []
   }
 }
 
@@ -30,7 +29,7 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
     const payload = await fetchJson(`/api/articles/${encodeURIComponent(slug)}`)
     return payload.data ? reviveArticle(payload.data) : null
   } catch {
-    return articleSeed.find(article => article.slug === slug) || null
+    return null
   }
 }
 
@@ -59,6 +58,7 @@ export async function getFeaturedArticles(): Promise<Article[]> {
   return articles.slice(0, 3)
 }
 
-export function getArticleCategories(): string[] {
-  return [...new Set(articleSeed.map(article => article.category))]
+export async function getArticleCategories(): Promise<string[]> {
+  const articles = await getArticles()
+  return [...new Set(articles.map(article => article.category).filter(Boolean))]
 }

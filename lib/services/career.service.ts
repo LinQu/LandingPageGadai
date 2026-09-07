@@ -1,5 +1,4 @@
 import type { CareerJob } from '@/lib/types'
-import { careerSeed } from '@/lib/content/career-seed'
 
 function reviveJob(raw: any): CareerJob {
   return {
@@ -26,7 +25,7 @@ export async function getCareerJobs(): Promise<CareerJob[]> {
     const payload = await fetchJson('/api/careers')
     return (payload.data || []).map(reviveJob)
   } catch {
-    return careerSeed
+    return []
   }
 }
 
@@ -35,6 +34,6 @@ export async function getCareerJobBySlug(slug: string): Promise<CareerJob | null
     const payload = await fetchJson(`/api/careers/${encodeURIComponent(slug)}`)
     return payload.data ? reviveJob(payload.data) : null
   } catch {
-    return careerSeed.find(job => job.slug === slug) || null
+    return null
   }
 }
