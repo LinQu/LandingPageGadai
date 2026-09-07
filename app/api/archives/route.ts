@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { archiveSeed } from '@/lib/content/archive-seed'
 import { isDatabaseConfigured, queryRows } from '@/lib/internal/db'
 
 export const dynamic = 'force-dynamic'
@@ -17,12 +16,8 @@ type ArchiveRow = {
   published_at: string | Date
 }
 
-function seedData() {
-  return archiveSeed.map(item => ({ ...item, publishedAt: item.publishedAt.toISOString() }))
-}
-
 export async function GET() {
-  if (!isDatabaseConfigured()) return NextResponse.json({ source: 'dummy', data: seedData() })
+  if (!isDatabaseConfigured()) return NextResponse.json({ source: 'mysql', data: [] })
 
   try {
     const rows = await queryRows<ArchiveRow>(
@@ -31,8 +26,6 @@ export async function GET() {
        WHERE status = 'published'
        ORDER BY year DESC, published_at DESC`
     )
-
-    if (rows.length === 0) return NextResponse.json({ source: 'dummy', data: seedData() })
 
     return NextResponse.json({
       source: 'mysql',
@@ -49,7 +42,7 @@ export async function GET() {
       })),
     })
   } catch (error) {
-    console.error('Public archive fallback to dummy:', error)
-    return NextResponse.json({ source: 'dummy', data: seedData() })
+    console.error('Public archive query error:', error)
+    return NextResponse.json({ source: 'mysql', data: [] })
   }
 }

@@ -1,8 +1,5 @@
-import { NextResponse } from 'next/server'
+import type { CareerJob } from '@/lib/types'
 import { isDatabaseConfigured, queryRows } from '@/lib/internal/db'
-
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 
 type JobRow = {
   id: number
@@ -32,7 +29,7 @@ function lines(value: string) {
   return String(value || '').split('\n').map(v => v.trim()).filter(Boolean)
 }
 
-function mapJob(row: JobRow) {
+export function mapJobRow(row: JobRow): CareerJob {
   return {
     id: String(row.id),
     title: row.title,
@@ -51,18 +48,15 @@ function mapJob(row: JobRow) {
     education: row.education,
     salaryMin: row.salary_min == null ? null : Number(row.salary_min),
     salaryMax: row.salary_max == null ? null : Number(row.salary_max),
-    applicationDeadline: row.application_deadline ? new Date(row.application_deadline).toISOString() : null,
+    applicationDeadline: row.application_deadline ? new Date(row.application_deadline) : null,
     applicationUrl: row.application_url || null,
-    publishedAt: row.published_at ? new Date(row.published_at).toISOString() : null,
+    publishedAt: row.published_at ? new Date(row.published_at) : null,
     status: row.status,
   }
 }
 
-export async function GET() {
-  if (!isDatabaseConfigured()) {
-    return NextResponse.json({ source: 'mysql', data: [] })
-  }
-
+export async function getCareerJobsServer(): Promise<CareerJob[]> {
+  if (!isDatabaseConfigured()) return []
   try {
     const rows = await queryRows<JobRow>(`
       SELECT id, title, slug, summary, description, responsibilities, qualifications, benefits,
@@ -71,13 +65,10 @@ export async function GET() {
       WHERE status='published' AND (application_deadline IS NULL OR application_deadline >= NOW())
       ORDER BY published_at DESC, created_at DESC
     `)
-
-    return NextResponse.json({
-      source: 'mysql',
-      data: rows.map(mapJob),
-    })
+    return rows.map(mapJobRow)
   } catch (error) {
-    console.error('API /api/careers error:', error)
-    return NextResponse.json({ source: 'mysql', data: [] })
+    console.error('getCareerJobsServer error:', error)
+    return []
   }
 }
+

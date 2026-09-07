@@ -37,7 +37,7 @@ export default function ArsipPage() {
           <div className="text-center">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-accent">Dokumen Perusahaan</p>
             <h1 className="mt-2 text-4xl font-extrabold text-primary">Arsip</h1>
-            <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-text-muted">Laporan dan publikasi perusahaan. Data saat ini masih dummy dan sudah disiapkan untuk dikelola dari panel internal.</p>
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-text-muted">Laporan dan publikasi resmi perusahaan.</p>
           </div>
 
           <div className="mx-auto mt-7 flex max-w-xl items-center gap-2 rounded-lg border border-slate-300 px-4 focus-within:border-primary">
@@ -45,7 +45,13 @@ export default function ArsipPage() {
             <input value={query} onChange={event => setQuery(event.target.value)} placeholder="Cari arsip..." className="h-11 w-full bg-transparent text-sm outline-none" />
           </div>
 
-          {loading ? <div className="py-20 text-center text-sm text-text-muted">Memuat arsip...</div> : (
+          {loading ? (
+            <div className="py-20 text-center text-sm text-text-muted">Memuat arsip...</div>
+          ) : filtered.length === 0 ? (
+            <div className="mt-10 rounded-xl border border-dashed border-slate-300 py-20 text-center text-sm text-text-muted">
+              {query ? 'Tidak ada arsip yang cocok dengan pencarian Anda.' : 'Belum ada arsip yang dipublikasikan.'}
+            </div>
+          ) : (
             <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
               {filtered.map(item => (
                 <article key={item.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -59,10 +65,8 @@ export default function ArsipPage() {
                   <h2 className="mt-4 text-base font-bold text-primary">{item.title}</h2>
                   <p className="mt-2 text-xs leading-5 text-text-muted">{item.description}</p>
                   {item.fileUrl ? (
-                    <a href={item.fileUrl} target="_blank" rel="noreferrer" className="mt-4 inline-flex rounded-md bg-primary px-4 py-2 text-xs font-bold text-white">Buka Dokumen</a>
-                  ) : (
-                    <span className="mt-4 inline-flex rounded-md bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-500">Dokumen dummy</span>
-                  )}
+                    <a href={item.fileUrl} target="_blank" rel="noreferrer" className="mt-4 inline-flex rounded-md bg-primary px-4 py-2 text-xs font-bold text-white transition hover:bg-primary/90">Buka Dokumen</a>
+                  ) : null}
                 </article>
               ))}
             </div>

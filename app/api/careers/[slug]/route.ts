@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { careerSeed } from '@/lib/content/career-seed'
 import { isDatabaseConfigured, queryRows } from '@/lib/internal/db'
 
 export const dynamic = 'force-dynamic'
@@ -66,8 +65,7 @@ export async function GET(
   const { slug } = await params
 
   if (!isDatabaseConfigured()) {
-    const seed = careerSeed.find(item => item.slug === slug)
-    return NextResponse.json({ source: 'dummy', data: seed || null })
+    return NextResponse.json({ error: 'Lowongan tidak ditemukan.' }, { status: 404 })
   }
 
   try {
@@ -81,8 +79,7 @@ export async function GET(
     )
 
     if (rows.length === 0) {
-      const seed = careerSeed.find(item => item.slug === slug)
-      return NextResponse.json({ source: 'dummy', data: seed || null })
+      return NextResponse.json({ error: 'Lowongan tidak ditemukan.' }, { status: 404 })
     }
 
     return NextResponse.json({
@@ -91,8 +88,6 @@ export async function GET(
     })
   } catch (error) {
     console.error(`API /api/careers/${slug} error:`, error)
-    const seed = careerSeed.find(item => item.slug === slug)
-    return NextResponse.json({ source: 'dummy', data: seed || null })
+    return NextResponse.json({ error: 'Lowongan tidak ditemukan.' }, { status: 404 })
   }
 }
-

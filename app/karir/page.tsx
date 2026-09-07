@@ -4,7 +4,9 @@ import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { CareerHero } from '@/components/career/career-hero'
 import { formatLocationName, formatPlacement } from '@/lib/utils/format-location'
-import { getCareerJobs } from '@/lib/services/career.service'
+import { getCareerJobsServer } from '@/lib/services/career.server'
+
+export const dynamic = 'force-dynamic'
 
 const PAGE_SIZE = 12
 
@@ -12,7 +14,7 @@ type SearchParams = Promise<{ position?: string; location?: string; education?: 
 
 export default async function CareerPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams
-  const jobs = await getCareerJobs()
+  const jobs = await getCareerJobsServer()
   const position = String(params.position || '')
   const location = String(params.location || '')
   const education = String(params.education || '')
