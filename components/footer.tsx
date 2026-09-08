@@ -1,20 +1,125 @@
+'use client'
+
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Camera, Play, Users } from 'lucide-react'
+import { getPawnCatalog } from '@/lib/services/pawn-catalog.service'
 
-const products = [
-  'Gadai Handphone',
-  'Gadai Laptop',
-  'Gadai Kamera',
-  'Gadai TV',
-  'Gadai Drone',
-  'Gadai Speaker',
-  'Gadai Home Theater',
-  'Gadai Proyektor',
-  'Gadai Motor',
+const DEFAULT_PRODUCTS = [
+  { label: 'Gadai HP', slug: 'hp' },
+  { label: 'Gadai Laptop', slug: 'laptop' },
+  { label: 'Gadai Kamera', slug: 'kamera' },
+  { label: 'Gadai TV', slug: 'tv' },
+  { label: 'Gadai Motor', slug: 'motor' },
+  { label: 'Gadai Speaker', slug: 'speaker' },
+]
+
+function InstagramIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+    </svg>
+  )
+}
+
+function TikTokIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298-.002.595.042.88.13V9.4a6.33 6.33 0 0 0-1-.08A6.34 6.34 0 0 0 3 15.66a6.34 6.34 0 0 0 10.86 4.43 6.27 6.27 0 0 0 1.91-4.49V8.65a8.28 8.28 0 0 0 4.82 1.55v-3.51h-1z" />
+    </svg>
+  )
+}
+
+function FacebookIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+    </svg>
+  )
+}
+
+const socialLinks = [
+  {
+    label: 'Instagram',
+    href: 'https://www.instagram.com/gadaisaktiofficial/',
+    icon: InstagramIcon,
+  },
+  {
+    label: 'TikTok',
+    href: 'https://www.tiktok.com/@gadaisaktiofficial',
+    icon: TikTokIcon,
+  },
+  {
+    label: 'Facebook',
+    href: 'https://web.facebook.com/gadaisaktiofficial',
+    icon: FacebookIcon,
+  },
 ]
 
 export function Footer() {
+  const [products, setProducts] = useState(DEFAULT_PRODUCTS)
+
+  useEffect(() => {
+    let active = true
+
+    async function loadCategories() {
+      try {
+        const catalog = await getPawnCatalog()
+        if (!active) return
+
+        if (Array.isArray(catalog) && catalog.length > 0) {
+          const activeOnly = catalog
+            .filter(cat => cat.status === 'active')
+            .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+            .map(cat => {
+              const nameLower = cat.name.toLowerCase()
+              const label = nameLower.startsWith('gadai') ? cat.name : `Gadai ${cat.name}`
+              const slug = cat.kode?.toLowerCase() || cat.name.toLowerCase().replace(/\s+/g, '-')
+              return { label, slug }
+            })
+
+          if (activeOnly.length > 0) {
+            setProducts(activeOnly)
+          }
+        }
+      } catch {
+        // Fallback to DEFAULT_PRODUCTS
+      }
+    }
+
+    void loadCategories()
+    return () => {
+      active = false
+    }
+  }, [])
+
   return (
     <footer className="bg-primary text-white">
       <div className="site-container py-12">
@@ -45,8 +150,10 @@ export function Footer() {
             <h2 className="text-xs font-bold uppercase tracking-[0.12em] text-white">Produk</h2>
             <ul className="mt-4 space-y-2 text-xs text-white/68">
               {products.map(product => (
-                <li key={product}>
-                  <Link href="/simulasi" className="transition-colors hover:text-white">{product}</Link>
+                <li key={product.slug}>
+                  <Link href={`/simulasi?kategori=${product.slug}`} className="transition-colors hover:text-white">
+                    {product.label}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -76,14 +183,17 @@ export function Footer() {
               </p>
             </div>
             <h3 className="mt-5 text-xs font-bold uppercase tracking-[0.12em] text-white">Sosial Media</h3>
-            <div className="mt-3 flex gap-2">
-              {[
-                { label: 'Instagram', icon: Camera },
-                { label: 'YouTube', icon: Play },
-                { label: 'Facebook', icon: Users },
-              ].map(({ label, icon: Icon }) => (
-                <a key={label} href="#" aria-label={label} className="flex h-8 w-8 items-center justify-center rounded-full border border-white/25 text-white/80 transition hover:bg-white hover:text-primary">
-                  <Icon size={15} />
+            <div className="mt-3 flex gap-2.5">
+              {socialLinks.map(({ label, href, icon: Icon }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label}
+                  className="flex h-8.5 w-8.5 items-center justify-center rounded-full border border-white/25 text-white/80 transition-all hover:border-white hover:bg-white hover:text-primary hover:scale-110 shadow-sm"
+                >
+                  <Icon />
                 </a>
               ))}
             </div>

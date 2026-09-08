@@ -102,7 +102,7 @@ export function CategoriesSection() {
   const topCategories = categories.length === 9 ? categories.slice(0, 4) : categories.slice(0, Math.ceil(categories.length / 2))
   const bottomCategories = categories.length === 9 ? categories.slice(4) : categories.slice(Math.ceil(categories.length / 2))
 
-  const renderCategoryCard = ({ id, name, image }: CategoryItem, idx: number, baseDelay = 0) => (
+  const renderCategoryCard = ({ id, name, image, slug }: CategoryItem, idx: number, baseDelay = 0) => (
     <motion.div
       key={id || name}
       initial={{ opacity: 0, y: 18 }}
@@ -125,7 +125,7 @@ export function CategoriesSection() {
           {name}
         </h3>
         <Link
-          href="/simulasi"
+          href={`/simulasi?kategori=${slug}`}
           className="mt-2.5 inline-flex min-h-[34px] w-full items-center justify-center rounded-lg bg-primary px-3 py-1.5 text-[11px] font-bold text-white shadow-sm transition-colors hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[0.98] sm:text-xs"
         >
           Gadaikan Sekarang

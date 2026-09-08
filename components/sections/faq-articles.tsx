@@ -56,7 +56,7 @@ export function FAQSection() {
               </div>
             </div>
             <a
-              href="https://wa.me/6281125201419?text=Halo%20Admin%20Gadai%20Sakti.%0A%0ASaya%20ingin%20mendapatkan%20informasi%20mengenai%20layanan%20gadai.%0A%0ATerima%20kasih."
+              href={`https://wa.me/6281125201419?text=${encodeURIComponent('Hallo.. Saya melihat Website Gadai Sakti, Saya ingin tau informasi proses gadai. Terimakasih.')}`}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-5 inline-flex rounded-md bg-accent px-5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-accent-dark"

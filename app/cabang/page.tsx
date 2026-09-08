@@ -607,14 +607,19 @@ export default function CabangPage() {
             <div className="flex shrink-0 flex-wrap gap-2">
               <button
                 type="button"
-                onClick={resetFilters}
-                className="rounded-lg bg-white px-4 py-2.5 text-xs font-bold text-primary hover:bg-slate-100 transition"
+                onClick={() => {
+                  resetFilters()
+                  window.scrollTo({ top: 380, behavior: 'smooth' })
+                }}
+                className="rounded-lg bg-white px-4 py-2.5 text-xs font-bold text-primary hover:bg-slate-100 transition shadow-sm"
               >
                 Lihat Semua Lokasi
               </button>
               <a
-                href="mailto:info@gadaisakti.id"
-                className="rounded-lg bg-accent px-4 py-2.5 text-xs font-bold text-white hover:brightness-95 transition"
+                href={`https://wa.me/6281125201419?text=${encodeURIComponent('Hallo.. Saya melihat Website Gadai Sakti, Saya ingin tau informasi proses gadai. Terimakasih.')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-lg bg-accent px-4 py-2.5 text-xs font-bold text-white hover:brightness-95 transition shadow-sm"
               >
                 Hubungi Kami
               </a>

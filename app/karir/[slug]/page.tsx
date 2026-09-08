@@ -3,6 +3,7 @@
 import { use, useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
+  ArrowRight,
   Clock3,
   ExternalLink,
   GraduationCap,
@@ -183,14 +184,12 @@ export default function CareerDetailPage({
                   </dl>
 
                   {job.applicationUrl ? (
-                    <a
-                      href={job.applicationUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <Link
+                      href={`/karir/${job.slug}/lamar`}
                       className="mt-5 flex h-11 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 text-sm font-bold text-white transition hover:bg-red-700 shadow-sm"
                     >
-                      Lamar Sekarang <ExternalLink size={16} />
-                    </a>
+                      Lamar Sekarang <ArrowRight size={16} />
+                    </Link>
                   ) : null}
 
                   <button

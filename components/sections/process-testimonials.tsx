@@ -261,29 +261,31 @@ export function TestimonialsSection() {
             initial={{ opacity: 0, y: 18 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="rounded-xl border border-slate-200 bg-white p-7 text-center shadow-lg shadow-slate-950/10 sm:p-8"
+            className="flex flex-col justify-center rounded-xl border border-slate-200 bg-white p-6 sm:p-8 lg:p-9 text-center shadow-lg shadow-slate-950/10"
           >
-            <div className="text-7xl font-bold tracking-[-0.06em] text-primary sm:text-8xl">
-              <AnimatedCounter value={averageRating} decimals={1} duration={1250} />
-            </div>
-            <div className="mt-3 flex justify-center">
-              <FractionalStarRating rating={averageRating} size={28} />
-            </div>
-            <p className="mt-3 text-xs font-medium text-text-muted">Rating Berdasarkan Ulasan Pelanggan</p>
+            <div className="my-auto">
+              <div className="text-7xl font-bold tracking-[-0.06em] text-primary sm:text-8xl">
+                <AnimatedCounter value={averageRating} decimals={1} duration={1250} />
+              </div>
+              <div className="mt-3 flex justify-center">
+                <FractionalStarRating rating={averageRating} size={28} />
+              </div>
+              <p className="mt-3 text-xs font-medium text-text-muted">Rating Berdasarkan Ulasan Pelanggan</p>
 
-            <div className="mt-7 grid grid-cols-3 gap-3">
-              {[
-                { value: 300, suffix: '+', label: 'Ulasan Google' },
-                { value: 25, suffix: '+', label: 'Cabang Dinilai' },
-                { value: 99, suffix: '%', label: 'Ulasan Positif' },
-              ].map(stat => (
-                <div key={stat.label} className="rounded-lg bg-accent px-2 py-4 text-white shadow-sm">
-                  <div className="text-xl font-bold sm:text-2xl">
-                    <AnimatedCounter value={stat.value} suffix={stat.suffix} duration={1500} />
+              <div className="mt-7 grid grid-cols-3 gap-3">
+                {[
+                  { value: 300, suffix: '+', label: 'Ulasan Google' },
+                  { value: 25, suffix: '+', label: 'Cabang Dinilai' },
+                  { value: 99, suffix: '%', label: 'Ulasan Positif' },
+                ].map(stat => (
+                  <div key={stat.label} className="rounded-lg bg-accent px-2 py-4 text-white shadow-sm">
+                    <div className="text-xl font-bold sm:text-2xl">
+                      <AnimatedCounter value={stat.value} suffix={stat.suffix} duration={1500} />
+                    </div>
+                    <div className="mt-1 text-[10px] font-medium sm:text-xs">{stat.label}</div>
                   </div>
-                  <div className="mt-1 text-[10px] font-medium sm:text-xs">{stat.label}</div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </motion.div>
 

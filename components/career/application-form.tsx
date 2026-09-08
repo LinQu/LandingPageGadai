@@ -27,13 +27,6 @@ export function ApplicationForm({ slug, jobTitle }: { slug: string; jobTitle: st
       setCode(payload.applicationCode)
       const url = payload.targetUrl || '/karir'
       setTargetUrl(url)
-
-      // Directly redirect to the psychotest / career web URL
-      if (typeof window !== 'undefined' && url) {
-        setTimeout(() => {
-          window.location.href = url
-        }, 800)
-      }
     } catch (error: any) {
       setMessage(error.message || 'Biodata belum dapat dikirim.')
     } finally {
@@ -42,27 +35,37 @@ export function ApplicationForm({ slug, jobTitle }: { slug: string; jobTitle: st
   }
 
   if (code && targetUrl) return (
-    <div className="mx-auto max-w-2xl rounded-2xl border border-emerald-200 bg-emerald-50/80 p-8 text-center shadow-sm">
-      <CheckCircle2 className="mx-auto text-emerald-600" size={48} />
-      <h2 className="mt-4 text-2xl font-extrabold text-primary">Biodata Berhasil Disimpan!</h2>
-      <p className="mt-2 text-sm text-text-muted">
-        Lamaran untuk posisi <strong>{jobTitle}</strong> telah terdata. Sedang mengarahkan Anda ke web pengerjaan psikotes...
-      </p>
-      <div className="mx-auto mt-5 max-w-sm rounded-xl border border-emerald-200 bg-white px-5 py-3 shadow-xs">
-        <span className="block text-xs text-slate-500 font-medium">Kode Lamaran</span>
-        <strong className="text-lg tracking-wide text-primary">{code}</strong>
+    <div className="mx-auto max-w-2xl rounded-2xl border border-emerald-200 bg-white p-8 text-center shadow-md md:p-10">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+        <CheckCircle2 size={36} />
       </div>
-      <div className="mt-7 flex flex-col items-center justify-center gap-3">
+      <h2 className="mt-5 text-2xl font-extrabold text-primary md:text-3xl">Biodata Berhasil Disimpan!</h2>
+      <p className="mt-3 text-sm leading-relaxed text-text-muted">
+        Lamaran Anda untuk posisi <strong className="text-primary font-semibold">{jobTitle}</strong> telah terdaftar dalam sistem kami.
+      </p>
+
+      <div className="mx-auto mt-6 max-w-xs rounded-xl border border-emerald-200 bg-emerald-50/60 px-5 py-3.5">
+        <span className="block text-xs font-semibold uppercase tracking-wider text-emerald-800">Kode Lamaran</span>
+        <strong className="mt-0.5 block text-xl font-extrabold tracking-wider text-primary">{code}</strong>
+      </div>
+
+      <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 p-4 text-left text-xs leading-relaxed text-slate-600">
+        <p className="font-semibold text-primary">Petunjuk Sebelum Memulai:</p>
+        <ul className="mt-1.5 list-disc space-y-1 pl-4">
+          <li>Pastikan koneksi internet Anda stabil.</li>
+          <li>Setiap bagian tes memiliki batasan waktu tersendiri.</li>
+          <li>Klik tombol di bawah jika Anda sudah siap untuk mulai mengerjakan.</li>
+        </ul>
+      </div>
+
+      <div className="mt-8 flex justify-center">
         <a
           href={targetUrl}
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-accent px-8 text-sm font-bold text-white shadow-md transition hover:bg-accent-dark hover:shadow-lg"
+          className="inline-flex h-12 min-w-72 items-center justify-center gap-2.5 rounded-xl bg-red-600 px-8 text-base font-bold text-white shadow-md transition hover:bg-red-700 hover:shadow-lg active:scale-[0.99]"
         >
-          <span>Lanjut ke Pengerjaan Psikotes Sekarang</span>
+          <span>Mulai Pengerjaan Psikotes</span>
           <ArrowRight size={18} />
         </a>
-        <p className="text-xs text-slate-500">
-          Jika halaman tidak terbuka secara otomatis dalam beberapa detik, klik tombol di atas.
-        </p>
       </div>
     </div>
   )
@@ -156,20 +159,20 @@ export function ApplicationForm({ slug, jobTitle }: { slug: string; jobTitle: st
           </p>
         ) : null}
 
-        <div className="mt-2 text-center">
+        <div className="mt-4 text-center">
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex h-12 min-w-72 items-center justify-center gap-2.5 rounded-xl bg-red-600 px-8 text-sm font-bold text-white shadow-md transition hover:bg-red-700 disabled:opacity-60 hover:shadow-lg"
+            className="inline-flex h-12 min-w-72 items-center justify-center gap-2.5 rounded-xl bg-red-600 px-8 text-base font-bold text-white shadow-md transition hover:bg-red-700 disabled:opacity-60 hover:shadow-lg active:scale-[0.99]"
           >
             {saving ? (
               <>
                 <Loader2 size={18} className="animate-spin" />
-                <span>Menyimpan &amp; Menyiapkan Psikotes...</span>
+                <span>Memproses Data Diri...</span>
               </>
             ) : (
               <>
-                <span>Kirim Biodata &amp; Lanjut ke Psikotes</span>
+                <span>Selanjutnya</span>
                 <ArrowRight size={18} />
               </>
             )}

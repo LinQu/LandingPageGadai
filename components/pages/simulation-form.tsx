@@ -7,11 +7,13 @@ import { motion } from 'framer-motion'
 import {
   ChevronLeft,
   ChevronRight,
+  MapPin,
   RotateCcw,
   Search,
 } from 'lucide-react'
 import { BranchSelector } from './branch-selector'
 import { getBranches } from '../../lib/services/branch.service'
+import { formatAddress, formatLocationName } from '../../lib/utils/format-location'
 import {
   calculateAdminFee,
   calculateEstimatedMin,
@@ -118,6 +120,7 @@ export function SimulationForm({ stage }: SimulationFormProps) {
   const selectedTenor = 30 as const
 
   const [branches, setBranches] = useState<Branch[]>([])
+  const [showBranchChange, setShowBranchChange] = useState(false)
   const [categorySearchQuery, setCategorySearchQuery] = useState('')
   const [brandSearchQuery, setBrandSearchQuery] = useState('')
   const [productSearchQuery, setProductSearchQuery] = useState('')
@@ -126,10 +129,12 @@ export function SimulationForm({ stage }: SimulationFormProps) {
   useEffect(() => {
     const stored = readStoredSimulation()
     if (stage === 'setup') {
-      // Pertahankan pilihan kategori sebelumnya jika ada
+      // Pertahankan pilihan kategori dan cabang sebelumnya jika ada
       setSimulation(prev => ({
         ...prev,
         category: stored.category || prev.category,
+        branch: stored.branch || prev.branch,
+        branchCode: stored.branchCode || prev.branchCode,
       }))
       setHydrated(true)
       return
@@ -204,58 +209,98 @@ export function SimulationForm({ stage }: SimulationFormProps) {
   const branchCode = simulation.branchCode || simulation.branch?.id || ''
   const selectedNoHp = selectedSpec?.apiCode || selectedSpec?.id || ''
 
-  // Load branches saat berada di stage variant (pemilihan cabang di akhir)
+  // Load branches (pemilihan cabang di awal bersama kategori)
   useEffect(() => {
-    if (stage === 'variant') {
-      let isMounted = true
+    let isMounted = true
 
-      const loadBranches = async (latitude: number, longitude: number) => {
-        try {
-          const branchesData = await getBranches(latitude, longitude)
-          if (isMounted) {
-            setBranches(branchesData)
-          }
-        } catch {
-          if (isMounted) {
-            setBranches([])
-          }
+    const loadBranches = async (latitude: number, longitude: number) => {
+      try {
+        const branchesData = await getBranches(latitude, longitude)
+        if (isMounted) {
+          setBranches(branchesData)
+          // Set default nearest branch if not selected yet
+          setSimulation(prev => {
+            if (prev.branch || branchesData.length === 0) return prev
+            const first = branchesData[0]
+            return {
+              ...prev,
+              branch: first,
+              branchCode: first.id,
+            }
+          })
+        }
+      } catch {
+        if (isMounted) {
+          setBranches([])
         }
       }
+    }
 
-      if (!navigator.geolocation) {
-        setLocationMessage('Izinkan akses lokasi untuk menampilkan cabang terdekat.')
-        void loadBranches(0, 0)
-        return () => {
-          isMounted = false
-        }
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        position => {
-          if (!isMounted) {
-            return
-          }
-
-          setLocationMessage('')
-          void loadBranches(position.coords.latitude, position.coords.longitude)
-        },
-        () => {
-          if (!isMounted) {
-            return
-          }
-
-          setLocationMessage('Izinkan akses lokasi untuk menampilkan cabang terdekat.')
-          void loadBranches(0, 0)
-        }
-      )
-
+    if (!navigator.geolocation) {
+      setLocationMessage('Izinkan akses lokasi untuk menampilkan cabang terdekat.')
+      void loadBranches(0, 0)
       return () => {
         isMounted = false
       }
     }
 
-    return undefined
-  }, [stage])
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        if (!isMounted) return
+        setLocationMessage('')
+        void loadBranches(position.coords.latitude, position.coords.longitude)
+      },
+      () => {
+        if (!isMounted) return
+        setLocationMessage('Izinkan akses lokasi untuk menampilkan cabang terdekat.')
+        void loadBranches(0, 0)
+      }
+    )
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  // Handle direct category URL query parameter (e.g. /simulasi?kategori=laptop)
+  useEffect(() => {
+    if (stage !== 'setup' || !hydrated || catalogState !== 'loaded' || catalog.length === 0) {
+      return
+    }
+
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const categoryQuery = (params.get('kategori') || params.get('category') || '').trim().toLowerCase()
+
+    if (!categoryQuery) return
+
+    const matched = catalog.find((cat: PawnCatalogCategory) => {
+      const code = (cat.kode || '').toLowerCase()
+      const name = (cat.name || '').toLowerCase()
+      const slug = name.replace(/\s+/g, '-')
+      return (
+        code === categoryQuery ||
+        name === categoryQuery ||
+        slug === categoryQuery ||
+        name.includes(categoryQuery) ||
+        categoryQuery.includes(code)
+      )
+    })
+
+    if (matched) {
+      handleSelectCategory(matched)
+      updateSimulation(prev => ({
+        ...prev,
+        category: {
+          kode: matched.kode,
+          name: matched.name,
+          imageUrl: matched.imageUrl,
+          icon: matched.icon,
+        },
+      }))
+      router.push('/simulasi/brand')
+    }
+  }, [catalog, catalogState, hydrated, router, stage])
 
   // Route protection / redirection guards
   useEffect(() => {
@@ -552,6 +597,15 @@ export function SimulationForm({ stage }: SimulationFormProps) {
       return
     }
 
+    if (!simulation.branch && nearestBranches.length > 0) {
+      handleSelectBranch(nearestBranches[0])
+      updateSimulation(prev => ({
+        ...prev,
+        branch: nearestBranches[0],
+        branchCode: nearestBranches[0].id,
+      }))
+    }
+
     router.push('/simulasi/brand')
   }
 
@@ -747,95 +801,118 @@ export function SimulationForm({ stage }: SimulationFormProps) {
           {/* Step Progress Bar Indicator */}
           <SimulationStepProgressBar currentStep={1} />
 
-          {/* Category Selection Card */}
-          <div className="rounded-2xl bg-white p-4 sm:p-6 shadow-sm ring-1 ring-black/5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-accent">Langkah 1</p>
-                <h2 className="mt-0.5 text-lg sm:text-2xl font-black text-primary">Pilih Kategori Barang</h2>
-              </div>
-              <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
-                {filteredCategories.length} kategori
-              </span>
-            </div>
+          {/* 2-Column Responsive Grid: Left (Mobile: Top) = Branch Selector, Right (Mobile: Bottom) = Category Selector */}
+          <div className="grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-2 items-start">
+            {/* Left Column (Mobile: Top): Pilih Cabang Terdekat */}
+            <BranchSelector
+              branches={nearestBranches}
+              onSelectBranch={handleSelectBranch}
+              selectedBranch={simulation.branch || null}
+              helperText={locationMessage}
+              stepNumber="1."
+              title="Pilih Cabang Terdekat"
+            />
 
-            {/* Category Search Filter */}
-            <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 shadow-inner">
-              <div className="flex items-center gap-2">
-                <Search size={15} className="text-slate-400 shrink-0" />
+            {/* Right Column (Mobile: Bottom): Pilih Kategori Barang */}
+            <div className="rounded-2xl sm:rounded-[2rem] bg-white p-4 sm:p-6 shadow-sm ring-1 ring-black/5 space-y-3 sm:space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-accent">Langkah 1</p>
+                  <h2 className="mt-0.5 text-base sm:text-lg font-bold text-primary">Pilih Kategori Barang</h2>
+                </div>
+                <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] sm:text-xs font-bold text-slate-600">
+                  {filteredCategories.length} Kategori
+                </span>
+              </div>
+
+              {/* Category Search Filter */}
+              <div className="relative">
+                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 shrink-0" />
                 <input
                   type="text"
                   value={categorySearchQuery}
                   onChange={e => setCategorySearchQuery(e.target.value)}
                   placeholder="Cari kategori (HP, Laptop, Tablet...)"
-                  className="w-full bg-transparent py-1 text-xs sm:text-sm outline-none placeholder:text-slate-400"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9.5 pr-4 text-xs sm:text-sm focus:border-primary focus:bg-white focus:outline-none transition"
                 />
               </div>
-            </div>
 
-            {/* Category Cards Grid */}
-            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5 md:grid-cols-4 lg:grid-cols-4">
-              {filteredCategories.map((category: PawnCatalogCategory) => {
-                const isSelected = simulation.category?.kode === category.kode
-                return (
-                  <button
-                    key={category.kode}
-                    type="button"
-                    onClick={() => {
-                      handleSelectCategory(category)
-                      // Auto continue to brand stage on click
-                      const selectedBrand: ItemBrand = {
-                        id: '',
-                        name: '',
-                        kodekat: category.kode,
-                      }
-                      updateSimulation(prev => ({
-                        ...prev,
-                        category: {
-                          kode: category.kode,
-                          name: category.name,
-                          imageUrl: category.imageUrl,
-                          icon: category.icon,
-                        },
-                      }))
-                      router.push('/simulasi/brand')
-                    }}
-                    className={`group rounded-xl border p-2.5 sm:p-4 text-left shadow-sm transition-all hover:shadow-md ${
-                      isSelected
-                        ? 'border-accent bg-accent/5 ring-2 ring-accent/30'
-                        : 'border-slate-200 bg-white hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="flex h-14 sm:h-20 items-center justify-center rounded-lg bg-slate-50 p-1 sm:p-2">
-                      {category.imageUrl ? (
-                        <Image
-                          src={category.imageUrl}
-                          alt={category.name}
-                          width={80}
-                          height={80}
-                          className="h-10 sm:h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="flex h-10 w-10 sm:h-14 sm:w-14 items-center justify-center rounded-lg sm:rounded-xl bg-primary/5 text-base sm:text-xl font-black text-primary/40">
-                          {category.name.slice(0, 1).toUpperCase()}
-                        </div>
-                      )}
-                    </div>
-                    <div className="mt-1.5 sm:mt-3 text-center text-[11px] sm:text-xs font-black uppercase tracking-[0.12em] sm:tracking-[0.16em] text-primary truncate">
-                      {category.name}
-                    </div>
-                    <div className={`mx-auto mt-1 sm:mt-2 h-0.5 sm:h-1 transition-all ${isSelected ? 'bg-accent w-6 sm:w-10' : 'bg-slate-200 w-3 sm:w-6'}`} />
-                  </button>
-                )
-              })}
-            </div>
-
-            {simulation.category ? (
-              <div className="mt-3 flex items-center justify-between rounded-xl bg-primary/5 px-3.5 py-2.5 text-xs sm:text-sm text-primary border border-primary/10">
-                <span>Kategori dipilih: <strong className="font-bold">{simulation.category.name}</strong></span>
-                <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] sm:text-[11px] font-bold text-accent">✓ Terpilih</span>
+              {/* Category Cards Grid */}
+              <div className="max-h-[340px] sm:max-h-[380px] overflow-y-auto grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5 pr-1 -mr-1">
+                {filteredCategories.map((category: PawnCatalogCategory) => {
+                  const isSelected = simulation.category?.kode === category.kode
+                  return (
+                    <button
+                      key={category.kode}
+                      type="button"
+                      onClick={() => {
+                        if (!simulation.branch && nearestBranches.length > 0) {
+                          handleSelectBranch(nearestBranches[0])
+                        }
+                        handleSelectCategory(category)
+                        updateSimulation(prev => ({
+                          ...prev,
+                          branch: prev.branch || nearestBranches[0],
+                          branchCode: prev.branch?.id || nearestBranches[0]?.id,
+                          category: {
+                            kode: category.kode,
+                            name: category.name,
+                            imageUrl: category.imageUrl,
+                            icon: category.icon,
+                          },
+                        }))
+                        router.push('/simulasi/brand')
+                      }}
+                      className={`group rounded-xl border-2 p-2.5 sm:p-3 text-left transition-all flex flex-col justify-between ${
+                        isSelected
+                          ? 'border-primary bg-primary/5 ring-2 ring-primary/20 shadow-sm'
+                          : 'border-slate-200 bg-white hover:border-primary/60 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="flex h-14 sm:h-16 items-center justify-center rounded-lg bg-slate-50 p-1 sm:p-2">
+                        {category.imageUrl ? (
+                          <Image
+                            src={category.imageUrl}
+                            alt={category.name}
+                            width={70}
+                            height={70}
+                            className="h-10 sm:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-lg bg-primary/5 text-base sm:text-lg font-black text-primary/40">
+                            {category.name.slice(0, 1).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-1.5 text-center text-[11px] sm:text-xs font-bold uppercase tracking-wider text-primary truncate">
+                        {category.name}
+                      </div>
+                      <div className="mt-1 flex items-center justify-between text-[10px] font-semibold pt-1 border-t border-slate-100">
+                        <span className={isSelected ? 'text-accent' : 'text-slate-400 group-hover:text-primary'}>
+                          {isSelected ? 'Terpilih' : 'Pilih'}
+                        </span>
+                        <span className={`text-[10px] ${isSelected ? 'text-accent' : 'text-slate-300 group-hover:text-primary'}`}>
+                          →
+                        </span>
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
-            ) : null}
+
+              {filteredCategories.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-xs text-slate-400">
+                  Tidak ada kategori yang cocok dengan pencarian.
+                </div>
+              ) : null}
+
+              {simulation.category ? (
+                <div className="flex items-center justify-between rounded-xl bg-primary/5 px-3.5 py-2.5 text-xs text-primary border border-primary/10">
+                  <span>Kategori dipilih: <strong className="font-bold">{simulation.category.name}</strong></span>
+                  <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] sm:text-[11px] font-bold text-accent">✓ Terpilih</span>
+                </div>
+              ) : null}
+            </div>
           </div>
 
           {/* Action Buttons */}
@@ -1058,8 +1135,8 @@ export function SimulationForm({ stage }: SimulationFormProps) {
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3 sm:pb-4">
           <div>
             <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-accent">Langkah 4 (Terakhir)</p>
-            <h2 className="mt-0.5 text-xl sm:text-3xl font-black text-primary">Pilih Varian &amp; Cabang</h2>
-            <p className="mt-0.5 text-xs sm:text-sm text-slate-500">Pilih varian barang dan tentukan cabang terdekat untuk melihat estimasi nilai pencairan.</p>
+            <h2 className="mt-0.5 text-xl sm:text-3xl font-black text-primary">Pilih Varian &amp; Estimasi Nilai</h2>
+            <p className="mt-0.5 text-xs sm:text-sm text-slate-500">Pilih spesifikasi barang Anda untuk melihat hasil taksiran dan simulasi pencairan dana.</p>
           </div>
           <button
             type="button"
@@ -1073,6 +1150,11 @@ export function SimulationForm({ stage }: SimulationFormProps) {
 
         {/* Selection Summary Breadcrumb */}
         <div className="flex flex-wrap items-center gap-1.5 text-[11px] sm:text-xs text-slate-600">
+          {simulation.branch?.NamaCabang ? (
+            <span className="rounded-lg bg-slate-100 px-2.5 py-1 font-medium">
+              Cabang: <strong className="text-primary">{simulation.branch.NamaCabang}</strong>
+            </span>
+          ) : null}
           {simulation.category?.name ? (
             <span className="rounded-lg bg-slate-100 px-2.5 py-1 font-medium">
               Kategori: <strong className="text-primary">{simulation.category.name}</strong>
@@ -1094,16 +1176,16 @@ export function SimulationForm({ stage }: SimulationFormProps) {
         <SimulationStepProgressBar currentStep={4} />
       </div>
 
-      {/* Main Responsive Grid: Left Column for Variant & Branch Selection, Right Column for Valuation & Calculation */}
+      {/* Main Responsive Grid: Left Column for Variant & Branch, Right Column for Valuation & Calculation */}
       <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-12 lg:items-start">
-        {/* Left Column: 1. Variant Selection + 2. Branch Selector */}
+        {/* Left Column: 1. Variant Selection + Active Branch / Branch Selector */}
         <div className="space-y-4 sm:space-y-6 lg:col-span-7">
           {/* 1. VARIANT SELECTION */}
           {selectedProduct ? (
             <div className="rounded-2xl sm:rounded-[2rem] bg-white p-4 sm:p-6 shadow-sm ring-1 ring-black/5 space-y-3 sm:space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-accent">1. Spesifikasi / Varian</p>
+                  <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-accent">Spesifikasi / Varian</p>
                   <h3 className="mt-0.5 text-base sm:text-lg font-bold text-primary">{selectedProduct.name}</h3>
                 </div>
                 <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] sm:text-xs font-bold text-blue-700">
@@ -1158,13 +1240,67 @@ export function SimulationForm({ stage }: SimulationFormProps) {
             </div>
           ) : null}
 
-          {/* 2. BRANCH SELECTION CARD BOX */}
-          <BranchSelector
-            branches={nearestBranches}
-            onSelectBranch={handleSelectBranch}
-            selectedBranch={simulation.branch || null}
-            helperText={locationMessage}
-          />
+          {/* 2. ACTIVE BRANCH CARD / QUICK SELECTOR */}
+          {showBranchChange ? (
+            <div className="space-y-2">
+              <div className="flex justify-between items-center px-1">
+                <span className="text-xs font-bold text-primary">Ganti Cabang Penaksiran</span>
+                <button
+                  type="button"
+                  onClick={() => setShowBranchChange(false)}
+                  className="text-xs text-slate-500 hover:text-slate-800 underline font-medium"
+                >
+                  Tutup
+                </button>
+              </div>
+              <BranchSelector
+                branches={nearestBranches}
+                onSelectBranch={branch => {
+                  handleSelectBranch(branch)
+                  setShowBranchChange(false)
+                }}
+                selectedBranch={simulation.branch || null}
+                helperText={locationMessage}
+                stepNumber="Cabang:"
+                title="Pilih Cabang Lain"
+              />
+            </div>
+          ) : simulation.branch ? (
+            <div className="rounded-2xl sm:rounded-[2rem] bg-white p-4 sm:p-5 shadow-sm ring-1 ring-black/5 flex items-center justify-between gap-3">
+              <div className="flex items-start gap-3 min-w-0">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent">
+                  <MapPin size={20} />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400">Cabang Penaksiran</span>
+                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">✓ Aktif</span>
+                  </div>
+                  <h4 className="text-sm sm:text-base font-bold text-primary truncate">{simulation.branch.NamaCabang}</h4>
+                  <p className="text-[11px] sm:text-xs text-slate-500 truncate">
+                    {formatLocationName(simulation.branch.Kota)}
+                    {simulation.branch.Alamat ? ` • ${formatAddress(simulation.branch.Alamat)}` : ''}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowBranchChange(true)}
+                className="shrink-0 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-primary hover:bg-slate-100 transition shadow-sm"
+              >
+                Ubah Cabang
+              </button>
+            </div>
+          ) : (
+            <BranchSelector
+              branches={nearestBranches}
+              onSelectBranch={handleSelectBranch}
+              selectedBranch={simulation.branch || null}
+              helperText={locationMessage}
+              stepNumber="Cabang:"
+              title="Pilih Cabang Terdekat"
+            />
+          )}
         </div>
 
         {/* Right Column / Side Panel: Summary & Valuation Calculation */}
