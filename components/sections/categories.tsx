@@ -135,19 +135,20 @@ export function CategoriesSection() {
   )
 
   return (
-    <section id="layanan" className="relative overflow-hidden bg-[#13374d] py-14 text-white sm:py-16">
-      {/* Background Image Layer using public/backgroundktg.jpeg */}
+    <section id="layanan" className="relative overflow-hidden bg-[#103247] py-14 text-white sm:py-16">
+      {/* Background Image Layer displaying authentic textures and patterns */}
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
         <Image
           src="/backgroundktg.jpeg"
           alt=""
           fill
+          priority
+          sizes="100vw"
           className="object-cover object-center"
-          priority={false}
         />
 
-        {/* Navy Gradient Overlay for high text contrast and readability */}
-        <div className="absolute inset-0 bg-[#0f2c3f]/80 bg-gradient-to-b from-[#0f2c3f]/85 via-[#13374d]/75 to-[#0f2c3f]/90" />
+        {/* Subtle transparent vignette to preserve full pattern visibility */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/15 via-transparent to-black/25" />
       </div>
 
       <div className="site-container relative z-10">
