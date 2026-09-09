@@ -1,14 +1,80 @@
-import { notFound } from 'next/navigation'
+'use client'
+
+import { use, useEffect, useState } from 'react'
+import Link from 'next/link'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { CareerHero } from '@/components/career/career-hero'
 import { ApplicationForm } from '@/components/career/application-form'
 import { getCareerJobBySlug } from '@/lib/services/career.service'
+import type { CareerJob } from '@/lib/types'
 
-export default async function ApplyCareerPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params
-  const job = await getCareerJobBySlug(slug)
-  if (!job) notFound()
+export default function ApplyCareerPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = use(params)
+  const [job, setJob] = useState<CareerJob | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let active = true
+    setLoading(true)
+
+    getCareerJobBySlug(slug)
+      .then(data => {
+        if (active) {
+          setJob(data)
+          setLoading(false)
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setJob(null)
+          setLoading(false)
+        }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [slug])
+
+  if (loading) {
+    return (
+      <>
+        <Header />
+        <main className="bg-white">
+          <CareerHero />
+          <section className="py-20 text-center text-sm text-text-muted">
+            Memuat formulir lamaran...
+          </section>
+        </main>
+        <Footer />
+      </>
+    )
+  }
+
+  if (!job) {
+    return (
+      <>
+        <Header />
+        <main className="bg-white">
+          <CareerHero />
+          <section className="py-20 text-center">
+            <h2 className="text-2xl font-bold text-primary">Lowongan Tidak Ditemukan</h2>
+            <p className="mt-2 text-sm text-text-muted">
+              Lowongan yang Anda cari mungkin sudah ditutup atau tidak tersedia.
+            </p>
+            <Link
+              href="/karir"
+              className="mt-6 inline-flex rounded-lg bg-accent px-5 py-2.5 text-xs font-bold text-white transition hover:brightness-95"
+            >
+              Lihat Lowongan Lainnya
+            </Link>
+          </section>
+        </main>
+        <Footer />
+      </>
+    )
+  }
 
   return (
     <>

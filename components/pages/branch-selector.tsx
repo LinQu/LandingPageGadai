@@ -10,6 +10,8 @@ type BranchSelectorProps = {
   onSelectBranch: (branch: Branch) => void
   selectedBranch?: Branch | null
   helperText?: string
+  stepNumber?: string
+  title?: string
 }
 
 export function BranchSelector({
@@ -17,6 +19,8 @@ export function BranchSelector({
   onSelectBranch,
   selectedBranch,
   helperText,
+  stepNumber = '1.',
+  title = 'Pilih Cabang Terdekat',
 }: BranchSelectorProps) {
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -41,10 +45,10 @@ export function BranchSelector({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-accent">
-            2. Pilih Lokasi Cabang
+            {stepNumber} Pilih Lokasi Cabang
           </p>
           <h3 className="mt-0.5 text-base sm:text-lg font-bold text-primary">
-            Pilih Cabang Terdekat
+            {title}
           </h3>
         </div>
         <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] sm:text-xs font-bold text-slate-600">

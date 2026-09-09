@@ -102,7 +102,7 @@ export function CategoriesSection() {
   const topCategories = categories.length === 9 ? categories.slice(0, 4) : categories.slice(0, Math.ceil(categories.length / 2))
   const bottomCategories = categories.length === 9 ? categories.slice(4) : categories.slice(Math.ceil(categories.length / 2))
 
-  const renderCategoryCard = ({ id, name, image }: CategoryItem, idx: number, baseDelay = 0) => (
+  const renderCategoryCard = ({ id, name, image, slug }: CategoryItem, idx: number, baseDelay = 0) => (
     <motion.div
       key={id || name}
       initial={{ opacity: 0, y: 18 }}
@@ -125,7 +125,7 @@ export function CategoriesSection() {
           {name}
         </h3>
         <Link
-          href="/simulasi"
+          href={`/simulasi?kategori=${slug}`}
           className="mt-2.5 inline-flex min-h-[34px] w-full items-center justify-center rounded-lg bg-primary px-3 py-1.5 text-[11px] font-bold text-white shadow-sm transition-colors hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[0.98] sm:text-xs"
         >
           Gadaikan Sekarang
@@ -135,19 +135,20 @@ export function CategoriesSection() {
   )
 
   return (
-    <section id="layanan" className="relative overflow-hidden bg-[#13374d] py-14 text-white sm:py-16">
-      {/* Background Image Layer using public/backgroundktg.jpeg */}
+    <section id="layanan" className="relative overflow-hidden bg-[#103247] py-14 text-white sm:py-16">
+      {/* Background Image Layer displaying authentic textures and patterns */}
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
         <Image
           src="/backgroundktg.jpeg"
           alt=""
           fill
+          priority
+          sizes="100vw"
           className="object-cover object-center"
-          priority={false}
         />
 
-        {/* Navy Gradient Overlay for high text contrast and readability */}
-        <div className="absolute inset-0 bg-[#0f2c3f]/80 bg-gradient-to-b from-[#0f2c3f]/85 via-[#13374d]/75 to-[#0f2c3f]/90" />
+        {/* Subtle transparent vignette to preserve full pattern visibility */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/15 via-transparent to-black/25" />
       </div>
 
       <div className="site-container relative z-10">

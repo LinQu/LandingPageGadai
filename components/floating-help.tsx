@@ -17,7 +17,7 @@ function isEditableTarget(target: EventTarget | null) {
 }
 
 const CENTRAL_WHATSAPP_NUMBER = '6281125201419'
-const WHATSAPP_MESSAGE = 'Halo Gadai Sakti, saya ingin bertanya mengenai layanan gadai.'
+const WHATSAPP_MESSAGE = 'Hallo.. Saya melihat Website Gadai Sakti, Saya ingin tau informasi proses gadai. Terimakasih.'
 
 export function FloatingHelp() {
   const pathname = usePathname()
