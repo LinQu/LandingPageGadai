@@ -32,6 +32,7 @@ async function runMigration() {
   const rootConn = await mysql.createConnection({ host, port, user, password })
 
   await rootConn.query(`CREATE DATABASE IF NOT EXISTS \`${database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`)
+  await rootConn.query(`ALTER DATABASE \`${database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`)
   await rootConn.end()
   console.log(`Database "${database}" is ready.`)
 
@@ -42,6 +43,32 @@ async function runMigration() {
     console.log('Executing database/schema.sql...')
     const sql = fs.readFileSync(schemaPath, 'utf8')
     await db.query(sql)
+  }
+
+  const liveChatTables = [
+    'live_chat_conversations',
+    'live_chat_quick_replies',
+    'live_chat_messages',
+    'live_chat_agent_presence',
+  ]
+
+  for (const table of liveChatTables) {
+    const [rows] = await db.query(
+      `SELECT COUNT(*) AS bad_columns
+       FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = ?
+         AND TABLE_NAME = ?
+         AND CHARACTER_SET_NAME IS NOT NULL
+         AND CHARACTER_SET_NAME <> 'utf8mb4'`,
+      [database, table]
+    )
+
+    if (Number(rows[0]?.bad_columns || 0) > 0) {
+      console.log(`Converting ${table} to utf8mb4...`)
+      await db.query(
+        `ALTER TABLE \`${table}\` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
+      )
+    }
   }
 
   // Ensure default_price column exists on pawn_product_variants if table existed before

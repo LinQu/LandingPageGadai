@@ -2,78 +2,77 @@
   position: fixed;
   right: max(18px, env(safe-area-inset-right));
   bottom: max(20px, calc(env(safe-area-inset-bottom) + 14px));
-  z-index: 70;
+  z-index: 90;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 10px;
-  pointer-events: none;
+  gap: 12px;
 }
 
-.suspended {
-  opacity: 0;
-  transform: translateY(8px);
-  transition: opacity 180ms ease, transform 180ms ease;
+.panel {
+  width: min(376px, calc(100vw - 28px));
+  height: min(590px, calc(100vh - 118px));
+  min-height: 430px;
+  overflow: hidden;
+  border: 1px solid rgba(18, 62, 84, 0.12);
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.24);
+  display: flex;
+  flex-direction: column;
 }
 
-.trigger,
-.menu {
-  pointer-events: auto;
-}
-
-.trigger {
+.panelHeader {
+  min-height: 72px;
+  padding: 12px 14px;
+  background: #123e54;
+  color: #ffffff;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  min-height: 58px;
-  border: 1px solid rgba(18, 62, 84, 0.08);
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.headerIdentity {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.headerIdentity strong,
+.headerIdentity span {
+  display: block;
+}
+
+.headerIdentity strong {
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.headerIdentity > div > span {
+  margin-top: 2px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.headerAvatar,
+.avatar {
+  position: relative;
+  flex: 0 0 auto;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.97);
-  box-shadow: 0 12px 34px rgba(15, 23, 42, 0.18);
-  color: #123e54;
-  cursor: pointer;
-  overflow: hidden;
-  transition:
-    width 280ms cubic-bezier(.2,.8,.2,1),
-    padding 280ms cubic-bezier(.2,.8,.2,1),
-    transform 180ms ease,
-    box-shadow 180ms ease,
-    opacity 180ms ease;
-  backdrop-filter: blur(10px);
+  background: #ef3139;
+  box-shadow: 0 0 0 2px #ffffff;
 }
 
-.trigger:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.22);
-}
-
-.trigger:focus-visible,
-.closeButton:focus-visible,
-.menuAction:focus-visible {
-  outline: 3px solid rgba(239, 49, 57, 0.28);
-  outline-offset: 3px;
-}
-
-.triggerCompact {
-  width: 58px;
-  padding: 4px;
-}
-
-.triggerExpanded {
-  width: 214px;
-  padding: 4px 17px 4px 4px;
+.headerAvatar {
+  width: 42px;
+  height: 42px;
 }
 
 .avatar {
-  position: relative;
-  display: block;
-  flex: 0 0 50px;
   width: 50px;
   height: 50px;
-  overflow: visible;
-  border-radius: 999px;
-  background: #ef3139;
-  box-shadow: 0 0 0 2px #fff;
 }
 
 .avatarImage {
@@ -81,93 +80,403 @@
   object-fit: cover;
 }
 
-.onlineDot {
+.statusDot {
   position: absolute;
-  right: 1px;
-  bottom: 2px;
+  right: 0;
+  bottom: 1px;
   width: 10px;
   height: 10px;
-  border: 2px solid #fff;
+  border: 2px solid #ffffff;
   border-radius: 999px;
   background: #22c55e;
 }
 
+.statusDotOffline {
+  background: #94a3b8;
+}
+
+.closeButton {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.panelBody {
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #f8fafc;
+}
+
+.loadingState {
+  margin: auto;
+  padding: 24px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.startForm {
+  padding: 22px 20px;
+  overflow-y: auto;
+}
+
+.welcomeIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: rgba(18, 62, 84, 0.09);
+  color: #123e54;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.startForm h2 {
+  margin: 15px 0 0;
+  color: #123e54;
+  font-size: 22px;
+}
+
+.startForm > p {
+  margin: 7px 0 18px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.startForm label {
+  display: block;
+  margin-top: 12px;
+}
+
+.startForm label span {
+  display: block;
+  margin-bottom: 6px;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.startForm input {
+  width: 100%;
+  height: 43px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 0 12px;
+  color: #0f172a;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+.startForm input:focus,
+.composer textarea:focus {
+  border-color: #123e54;
+  box-shadow: 0 0 0 3px rgba(18, 62, 84, 0.09);
+}
+
+.primaryButton {
+  width: 100%;
+  height: 44px;
+  margin-top: 17px;
+  border: 0;
+  border-radius: 11px;
+  background: #ef3139;
+  color: #ffffff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primaryButton:disabled,
+.composer button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.privacyNote {
+  margin: 10px 0 0 !important;
+  text-align: center;
+  font-size: 9px !important;
+  color: #94a3b8 !important;
+}
+
+.errorBox,
+.chatError {
+  border: 1px solid #fecaca;
+  border-radius: 9px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.errorBox {
+  margin-top: 12px;
+  padding: 9px 10px;
+}
+
+.chatError {
+  margin: 0 12px 8px;
+  padding: 8px 9px;
+}
+
+.messages {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 12px 10px;
+}
+
+.messageRow {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 9px;
+}
+
+.messageRowOwn {
+  justify-content: flex-end;
+}
+
+.messageBubble {
+  max-width: 82%;
+  border-radius: 15px;
+  padding: 9px 11px 7px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+.messageBubble p {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.messageBubble time {
+  display: block;
+  margin-top: 4px;
+  text-align: right;
+  font-size: 8px;
+  opacity: 0.56;
+}
+
+.messageOwn {
+  border-bottom-right-radius: 5px;
+  background: #123e54;
+  color: #ffffff;
+}
+
+.messageAdmin {
+  border-bottom-left-radius: 5px;
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+
+.messageBot {
+  border-bottom-left-radius: 5px;
+  background: #eff6ff;
+  color: #123e54;
+  border: 1px solid #dbeafe;
+}
+
+.senderName {
+  display: block;
+  margin-bottom: 3px;
+  color: #123e54;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.chatMeta {
+  padding: 7px 12px;
+  border-top: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #94a3b8;
+  font-size: 9px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.composer {
+  padding: 9px 10px;
+  border-top: 1px solid #e2e8f0;
+  background: #ffffff;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.composer textarea {
+  min-height: 42px;
+  max-height: 100px;
+  flex: 1;
+  resize: none;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 11px 12px;
+  color: #0f172a;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.4;
+  outline: none;
+}
+
+.composer button {
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 12px;
+  background: #ef3139;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.closedBox {
+  padding: 12px;
+  border-top: 1px solid #e2e8f0;
+  background: #ffffff;
+  text-align: center;
+}
+
+.closedBox p {
+  margin: 0 0 8px;
+  color: #64748b;
+  font-size: 11px;
+}
+
+.closedBox button {
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #123e54;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.whatsappFallback {
+  min-height: 30px;
+  padding: 7px 12px;
+  border-top: 1px solid #eef2f7;
+  background: #ffffff;
+  color: #64748b;
+  text-align: center;
+  text-decoration: none;
+  font-size: 9px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.trigger {
+  min-height: 58px;
+  width: 214px;
+  border: 1px solid rgba(18, 62, 84, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 12px 34px rgba(15, 23, 42, 0.18);
+  color: #123e54;
+  padding: 4px 17px 4px 4px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.trigger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.22);
+}
+
+.triggerActive {
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.15);
+}
+
 .triggerText {
-  display: grid;
   min-width: 0;
   margin-left: 11px;
   text-align: left;
-  white-space: nowrap;
-  opacity: 1;
-  transform: translateX(0);
-  transition: opacity 180ms ease 80ms, transform 180ms ease 80ms;
+  display: grid;
 }
 
 .triggerText strong {
+  color: #0f172a;
   font-size: 13px;
   line-height: 1.2;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: #0f172a;
+  font-weight: 800;
 }
 
 .triggerText small {
   margin-top: 2px;
-  font-size: 11px;
+  color: #64748b;
+  font-size: 10px;
   line-height: 1.2;
   font-weight: 500;
-  color: #64748b;
 }
 
-.triggerCompact .triggerText {
-  width: 0;
-  margin-left: 0;
-  opacity: 0;
-  transform: translateX(6px);
+.trigger:focus-visible,
+.closeButton:focus-visible,
+.primaryButton:focus-visible,
+.composer button:focus-visible {
+  outline: 3px solid rgba(239, 49, 57, 0.28);
+  outline-offset: 3px;
 }
 
 @media (max-width: 640px) {
   .root {
-    right: max(12px, env(safe-area-inset-right));
-    bottom: max(14px, calc(env(safe-area-inset-bottom) + 10px));
+    right: max(10px, env(safe-area-inset-right));
+    bottom: max(10px, calc(env(safe-area-inset-bottom) + 8px));
+  }
+
+  .panel {
+    width: calc(100vw - 20px);
+    height: min(620px, calc(100dvh - 86px));
+    min-height: 390px;
+    border-radius: 18px;
   }
 
   .trigger {
+    width: 184px;
     min-height: 54px;
-  }
-
-  .triggerCompact {
-    width: 54px;
-  }
-
-  .triggerExpanded {
-    width: 188px;
-    padding-right: 14px;
+    padding-right: 13px;
   }
 
   .avatar {
-    flex-basis: 46px;
     width: 46px;
     height: 46px;
-  }
-
-  .triggerText {
-    margin-left: 9px;
   }
 
   .triggerText strong {
     font-size: 12px;
   }
-
-  .triggerText small {
-    font-size: 10px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .trigger,
-  .triggerText,
-  .suspended {
-    transition: none !important;
+  .trigger {
+    transition: none;
   }
 }
