@@ -35,21 +35,21 @@ export function HeroSection() {
         <picture className={styles.picture} aria-hidden="true">
           <source
             media="(max-width: 899px) and (orientation: landscape)"
-            srcSet="/images/hero/hero-gadai-tablet.webp"
-            type="image/webp"
+            srcSet="/images/hero/hero-gadai-tablet.png"
+            type="image/png"
           />
           <source
             media="(max-width: 767px) and (orientation: portrait)"
-            srcSet="/images/hero/hero-gadai-mobile.webp"
-            type="image/webp"
+            srcSet="/images/hero/hero-gadai-mobile.png"
+            type="image/png"
           />
           <source
             media="(max-width: 1199px)"
-            srcSet="/images/hero/hero-gadai-tablet.webp"
-            type="image/webp"
+            srcSet="/images/hero/hero-gadai-tablet.png"
+            type="image/png"
           />
           <img
-            src="/images/hero/hero-gadai-desktop.webp"
+            src="/images/hero/hero-gadai-desktop.png"
             alt=""
             width="1920"
             height="700"
@@ -79,8 +79,8 @@ export function HeroSection() {
             </p>
 
             <div className={styles.actions}>
-              <Link href="/simulasi" className={styles.primaryCta}>
-                Mulai Simulasi Gadai
+              <Link href="#layanan" className={styles.primaryCta}>
+                Cek Barang Gadai
                 <ArrowRight size={17} />
               </Link>
               <Link href="/cabang" className={styles.secondaryCta}>

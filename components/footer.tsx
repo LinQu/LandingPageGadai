@@ -141,7 +141,8 @@ export function Footer() {
               </div>
               <span className="text-[10px] font-medium leading-tight text-white/80">
                 Berizin &amp; Diawasi oleh<br />
-                <strong className="font-bold text-white">Otoritas Jasa Keuangan</strong>
+                <strong className="font-bold text-white">Otoritas Jasa Keuangan</strong><br />
+                <span className="text-[9px] text-white/70">No. Izin: KEP-2/PL.02/2025</span>
               </span>
             </div>
           </div>

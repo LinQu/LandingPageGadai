@@ -259,9 +259,7 @@ function buildPopupHtml(branch: Branch) {
   const phone = branch.Phone
     ? `<span class="gs-map-popup__meta">Telp. ${escapeHtml(branch.Phone)}</span>`
     : ''
-  const hours = branch.hours
-    ? `<span class="gs-map-popup__meta">${escapeHtml(branch.hours)}</span>`
-    : ''
+  const hours = `<span class="gs-map-popup__meta">Jam operasional: ${escapeHtml(branch.hours || '08.30 - 20.30')}</span>`
 
   return `
     <div class="gs-map-popup">

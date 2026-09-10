@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
-import { ExternalLink, LocateFixed, Loader2, MapPin, Navigation, Search } from 'lucide-react'
+import { ExternalLink, LocateFixed, Loader2, MapPin, MessageCircle, Navigation, Search } from 'lucide-react'
 import { BranchMap } from '@/components/maps/branch-map'
 import { calculateDistance, getBranches } from '@/lib/services/branch.service'
 import { formatAddress } from '@/lib/utils/format-location'
@@ -189,7 +189,23 @@ export function BranchLocatorSection() {
             {locating ? 'Mencari lokasi Anda...' : 'Gunakan lokasi saya saat ini'}
           </button>
 
-          {message ? <p className="mt-3 max-w-xl text-xs leading-5 text-slate-500">{message}</p> : null}
+          {message ? (
+            <div className="mt-4 max-w-xl rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
+              <p className="font-bold text-primary text-sm">Belum menemukan cabang di area Anda?</p>
+              <p className="mt-1 leading-relaxed text-slate-600">
+                Hubungi Admin untuk informasi lokasi dan layanan Gadai Sakti yang tersedia.
+              </p>
+              <a
+                href={`https://wa.me/6281125201419?text=${encodeURIComponent('Hallo.. Saya melihat Website Gadai Sakti, Saya ingin bertanya informasi lokasi cabang dan layanan di area saya. Terimakasih.')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-accent px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:brightness-95"
+              >
+                <MessageCircle size={14} />
+                <span>Tanya Admin</span>
+              </a>
+            </div>
+          ) : null}
 
           {selectedBranch ? (
             <div className="mt-5 max-w-xl rounded-lg border border-slate-200 bg-slate-50 p-4">
@@ -197,6 +213,7 @@ export function BranchLocatorSection() {
                 <div>
                   <p className="text-sm font-bold text-primary">{selectedBranch.NamaCabang}</p>
                   <p className="mt-1 text-xs leading-5 text-text-muted">{formatAddress(selectedBranch.Alamat)}</p>
+                  <p className="mt-1 text-xs text-slate-600 font-medium">Jam operasional: {selectedBranch.hours || '08.30 - 20.30'}</p>
                   {selectedBranch.distance !== undefined ? (
                     <p className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-accent">
                       <Navigation size={13} /> Sekitar {selectedBranch.distance.toFixed(1)} km dari lokasi Anda
