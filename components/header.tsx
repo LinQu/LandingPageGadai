@@ -11,6 +11,7 @@ const navItems = [
   { label: 'Artikel', href: '/artikel' },
   { label: 'Tentang Kami', href: '/tentang-kami' },
   { label: 'Karir', href: '/karir' },
+  { label: 'Cek Faktur', href: '/cek-status-faktur' },
 ]
 
 export function Header() {
