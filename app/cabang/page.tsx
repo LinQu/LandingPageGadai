@@ -489,7 +489,7 @@ export default function CabangPage() {
                           ) : null}
                           <div className="flex items-start gap-2">
                             <Clock3 className="mt-0.5 shrink-0 text-slate-400" size={15} />
-                            <span className="text-slate-600">{branch.hours || 'Jam operasional: konfirmasi ke cabang'}</span>
+                            <span className="text-slate-600">Jam operasional: {branch.hours || '08.30 - 20.30'}</span>
                           </div>
                         </div>
 
@@ -583,12 +583,30 @@ export default function CabangPage() {
               ) : null}
             </>
           ) : (
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 py-16 text-center">
-              <Building2 className="mx-auto text-slate-300" size={48} />
-              <p className="mt-3 text-sm font-semibold text-slate-600">Cabang tidak ditemukan.</p>
-              <button type="button" onClick={resetFilters} className="mt-3 text-xs font-bold text-accent hover:underline">
-                Reset pencarian
-              </button>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 py-12 px-6 text-center max-w-lg mx-auto">
+              <Building2 className="mx-auto text-slate-300" size={44} />
+              <h3 className="mt-3 text-base font-bold text-primary">Belum menemukan cabang di area Anda?</h3>
+              <p className="mt-1.5 text-xs leading-5 text-slate-600">
+                Hubungi Admin untuk informasi lokasi dan layanan Gadai Sakti yang tersedia.
+              </p>
+              <div className="mt-4 flex flex-wrap justify-center items-center gap-3">
+                <a
+                  href={`https://wa.me/6281125201419?text=${encodeURIComponent('Hallo.. Saya melihat Website Gadai Sakti, Saya ingin bertanya informasi lokasi cabang dan layanan di area saya. Terimakasih.')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:brightness-95"
+                >
+                  <MessageCircle size={15} />
+                  <span>Tanya Admin</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Reset Filter
+                </button>
+              </div>
             </div>
           )}
 
@@ -598,9 +616,9 @@ export default function CabangPage() {
                 <MapPinned size={32} />
               </div>
               <div>
-                <h2 className="text-lg font-extrabold">Tidak menemukan cabang terdekat?</h2>
-                <p className="mt-1 max-w-2xl text-xs leading-5 text-white/75">
-                  Lihat semua daftar cabang Gadai Sakti di seluruh Indonesia atau hubungi kami untuk informasi lebih lanjut.
+                <h2 className="text-lg font-extrabold">Belum menemukan cabang di area Anda?</h2>
+                <p className="mt-1 max-w-2xl text-xs leading-5 text-white/80">
+                  Hubungi Admin untuk informasi lokasi dan layanan Gadai Sakti yang tersedia.
                 </p>
               </div>
             </div>
@@ -616,12 +634,13 @@ export default function CabangPage() {
                 Lihat Semua Lokasi
               </button>
               <a
-                href={`https://wa.me/6281125201419?text=${encodeURIComponent('Hallo.. Saya melihat Website Gadai Sakti, Saya ingin tau informasi proses gadai. Terimakasih.')}`}
+                href={`https://wa.me/6281125201419?text=${encodeURIComponent('Hallo.. Saya melihat Website Gadai Sakti, Saya ingin bertanya informasi lokasi cabang dan layanan di area saya. Terimakasih.')}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-lg bg-accent px-4 py-2.5 text-xs font-bold text-white hover:brightness-95 transition shadow-sm"
+                className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-xs font-bold text-white hover:brightness-95 transition shadow-sm"
               >
-                Hubungi Kami
+                <MessageCircle size={15} />
+                <span>Tanya Admin</span>
               </a>
             </div>
           </div>

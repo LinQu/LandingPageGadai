@@ -44,6 +44,9 @@ export function AboutOverview() {
                 <p className="text-xs font-bold text-primary sm:text-sm">
                   Berizin &amp; Diawasi oleh Otoritas Jasa Keuangan (OJK)
                 </p>
+                <p className="text-[11px] font-bold text-accent sm:text-xs">
+                  Nomor Izin : KEP-2/PL.02/2025
+                </p>
                 <p className="text-[10px] leading-4 text-text-muted sm:text-xs">
                   Seluruh layanan dan operasional Gadai Sakti resmi terdaftar serta diawasi oleh Otoritas Jasa Keuangan untuk memberikan jaminan keamanan transaksi bagi seluruh nasabah.
                 </p>

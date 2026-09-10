@@ -61,7 +61,7 @@ function normalizeBranch(item: BranchApiItem, latitude: number, longitude: numbe
     Phone: item.phone ?? item.telepon ?? item.Telepon ?? '',
     latitude: branchLatitude,
     longitude: branchLongitude,
-    hours: item.jamOperasional ?? item.JamOperasional,
+    hours: (item.jamOperasional ?? item.JamOperasional)?.trim() || '08.30 - 20.30',
     distance:
       (latitude !== 0 || longitude !== 0) && (branchLatitude !== 0 || branchLongitude !== 0)
         ? calculateDistance(latitude, longitude, branchLatitude, branchLongitude)

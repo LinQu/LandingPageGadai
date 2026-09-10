@@ -914,34 +914,6 @@ export function SimulationForm({ stage }: SimulationFormProps) {
               ) : null}
             </div>
           </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-2">
-            <button
-              type="button"
-              onClick={handleContinueFromSetup}
-              disabled={!simulation.category}
-              className="inline-flex w-full sm:flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-sm sm:text-base font-bold text-white shadow-md shadow-primary/20 transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <span>Lanjut Pilih Merek</span>
-              <ChevronRight size={18} />
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setCategorySearchQuery('')
-                setBrandSearchQuery('')
-                setProductSearchQuery('')
-                setVariantSearchQuery('')
-                resetEstimateData()
-                setSimulation({})
-              }}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
-            >
-              <RotateCcw size={16} />
-              <span>Reset</span>
-            </button>
-          </div>
         </section>
       </div>
     )

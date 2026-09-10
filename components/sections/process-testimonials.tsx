@@ -170,7 +170,7 @@ export function ProcessSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.08 }}
-                className="relative z-10 pt-6"
+                className="relative z-10 flex h-full flex-col pt-6"
               >
                 {/* Tablet Row 2 Connector: Step 3 -> Step 4 at vertical center (56px) */}
                 {index === 2 && (
@@ -198,9 +198,11 @@ export function ProcessSection() {
                 </div>
 
                 {/* Step Card Content */}
-                <div className="mt-8 min-h-[168px] rounded-lg bg-white px-5 pb-5 pt-11 text-center shadow-lg shadow-slate-950/20">
-                  <h3 className="text-sm font-bold text-primary">{title}</h3>
-                  <p className="mt-3 text-xs leading-5 text-text-muted">{description}</p>
+                <div className="mt-8 flex flex-1 flex-col justify-start rounded-xl bg-white px-5 pb-6 pt-11 text-center shadow-lg shadow-slate-950/20 transition-transform duration-200 hover:-translate-y-1 min-h-[195px]">
+                  <div className="flex min-h-[46px] items-center justify-center sm:min-h-[50px]">
+                    <h3 className="text-base font-bold leading-snug text-primary sm:text-[17px]">{title}</h3>
+                  </div>
+                  <p className="mt-2 text-xs leading-relaxed text-text-muted sm:text-[13px]">{description}</p>
                 </div>
               </motion.div>
             )

@@ -19,8 +19,8 @@ export const faqs: FAQItem[] = [
   },
   {
     id: '4',
-    question: 'Berapa persen maksimal taksiran nilai barang?',
-    answer: 'Kami memberikan taksiran hingga 90% dari nilai pasaran barang Anda.',
+    question: 'Berapa persen maksimal pencairan nilai barang?',
+    answer: 'Kami memberikan pencairan hingga 90% dari nilai pasaran barang Anda.',
   },
   {
     id: '5',

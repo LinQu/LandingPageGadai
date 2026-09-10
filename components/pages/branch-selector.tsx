@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Check, MapPin, Navigation, Search, X } from 'lucide-react'
+import { Check, MapPin, MessageCircle, Navigation, Search, X } from 'lucide-react'
 import { formatAddress, formatLocationName } from '@/lib/utils/format-location'
 import type { Branch } from '@/lib/types'
 
@@ -156,8 +156,20 @@ export function BranchSelector({
         })}
 
         {filteredBranches.length === 0 ? (
-          <div className="sm:col-span-2 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-xs text-slate-400">
-            Tidak ada cabang yang cocok dengan kata kunci pencarian.
+          <div className="sm:col-span-2 rounded-xl border border-slate-200 bg-slate-50 p-5 text-center">
+            <p className="text-xs font-bold text-primary">Belum menemukan cabang di area Anda?</p>
+            <p className="mt-1 text-[11px] leading-relaxed text-slate-500">
+              Hubungi Admin untuk informasi lokasi dan layanan Gadai Sakti yang tersedia.
+            </p>
+            <a
+              href={`https://wa.me/6281125201419?text=${encodeURIComponent('Hallo.. Saya melihat Website Gadai Sakti saat simulasi gadai, Saya ingin bertanya informasi lokasi cabang dan layanan di area saya. Terimakasih.')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-accent px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:brightness-95"
+            >
+              <MessageCircle size={14} />
+              <span>Tanya Admin</span>
+            </a>
           </div>
         ) : null}
       </div>
