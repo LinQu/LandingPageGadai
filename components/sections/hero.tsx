@@ -2,31 +2,8 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowRight, ClipboardCheck, Landmark, ShieldCheck, Zap } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import styles from './hero.module.css'
-
-const highlights = [
-  {
-    icon: Zap,
-    title: 'Proses Cepat',
-    description: 'Taksiran dan pencairan dibuat praktis langsung di cabang.',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Barang Terjaga',
-    description: 'Barang jaminan disimpan dengan prosedur keamanan yang terjaga.',
-  },
-  {
-    icon: ClipboardCheck,
-    title: 'Syarat Mudah',
-    description: 'Cukup siapkan identitas dan barang jaminan untuk proses gadai.',
-  },
-  {
-    icon: Landmark,
-    title: 'Berizin OJK',
-    description: 'Kegiatan usaha resmi dan diawasi Otoritas Jasa Keuangan.',
-  },
-]
 
 export function HeroSection() {
   return (
@@ -74,44 +51,16 @@ export function HeroSection() {
               Gadai Elektronik &amp; Motor Instan,
               <br className={styles.subtitleBreak} /> Terjamin, dan Terpercaya
             </p>
-            <p className={styles.description}>
-              Dapatkan estimasi awal nilai gadai secara online, lalu lanjutkan proses dengan pelayanan langsung di cabang Gadai Sakti terdekat.
-            </p>
 
             <div className={styles.actions}>
               <Link href="#layanan" className={styles.primaryCta}>
                 Cek Barang Gadai
-                <ArrowRight size={17} />
+                <ArrowRight size={18} />
               </Link>
               <Link href="/cabang" className={styles.secondaryCta}>
                 Temukan Cabang
               </Link>
             </div>
-
-            <p className={styles.note}>
-              *Estimasi awal dapat berubah setelah pemeriksaan fisik barang di cabang.
-            </p>
-
-            <motion.div
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, delay: 0.1 }}
-              className={styles.highlights}
-            >
-              <div className={styles.highlightsGrid}>
-                {highlights.map(({ icon: Icon, title, description }) => (
-                  <div key={title} className={styles.highlightItem}>
-                    <div className={styles.highlightIcon}>
-                      <Icon size={19} strokeWidth={1.75} />
-                    </div>
-                    <div className={styles.highlightText}>
-                      <h2 className={styles.highlightTitle}>{title}</h2>
-                      <p className={styles.highlightDescription}>{description}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
           </motion.div>
         </div>
       </div>
