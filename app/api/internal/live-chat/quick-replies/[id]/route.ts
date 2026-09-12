@@ -20,6 +20,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   const priority = Math.max(0, Math.min(999, Number(body.priority || 0)))
   const autoSend = body.autoSend ? 1 : 0
   const active = body.active === false ? 0 : 1
+  const customerVisible = body.customerVisible ? 1 : 0
 
   if (!title || !message) return NextResponse.json({ error: 'Judul dan isi balasan wajib diisi.' }, { status: 400 })
   if (autoSend && splitKeywords(keywords).length === 0) {
@@ -29,9 +30,9 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   try {
     await execute(
       `UPDATE live_chat_quick_replies
-       SET title = ?, category = ?, message = ?, keywords = ?, priority = ?, auto_send = ?, active = ?, updated_at = NOW()
+       SET title = ?, category = ?, message = ?, keywords = ?, priority = ?, auto_send = ?, active = ?, customer_visible = ?, updated_at = NOW()
        WHERE id = ?`,
-      [title, category, message, keywords, priority, autoSend, active, id]
+      [title, category, message, keywords, priority, autoSend, active, customerVisible, id]
     )
     return NextResponse.json({ ok: true })
   } catch (error) {

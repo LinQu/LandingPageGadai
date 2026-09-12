@@ -12,7 +12,7 @@ export async function GET() {
 
   try {
     const rows = await queryRows<any>(
-      `SELECT id, title, category, message, keywords, priority, auto_send, active, created_at, updated_at
+      `SELECT id, title, category, message, keywords, priority, auto_send, active, customer_visible, created_at, updated_at
        FROM live_chat_quick_replies
        ORDER BY active DESC, priority DESC, title ASC`
     )
@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
   const priority = Math.max(0, Math.min(999, Number(body.priority || 0)))
   const autoSend = body.autoSend ? 1 : 0
   const active = body.active === false ? 0 : 1
+  const customerVisible = body.customerVisible ? 1 : 0
 
   if (!title || !message) return NextResponse.json({ error: 'Judul dan isi balasan wajib diisi.' }, { status: 400 })
   if ((autoSend || keywords) && splitKeywords(keywords).length === 0) {
@@ -44,9 +45,9 @@ export async function POST(request: NextRequest) {
   try {
     const result = await execute(
       `INSERT INTO live_chat_quick_replies
-       (title, category, message, keywords, priority, auto_send, active, created_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [title, category, message, keywords, priority, autoSend, active, admin.id]
+       (title, category, message, keywords, priority, auto_send, active, customer_visible, created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [title, category, message, keywords, priority, autoSend, active, customerVisible, admin.id]
     )
     return NextResponse.json({ ok: true, id: Number(result.insertId) }, { status: 201 })
   } catch (error) {

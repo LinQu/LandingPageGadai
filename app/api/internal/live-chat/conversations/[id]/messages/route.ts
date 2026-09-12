@@ -17,10 +17,20 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
   let message = cleanChatMessage(body.message)
 
   try {
-    const conversationRows = await queryRows<any>('SELECT id, status FROM live_chat_conversations WHERE id = ? LIMIT 1', [id])
+    const conversationRows = await queryRows<any>(
+      `SELECT c.id, c.status, c.assigned_admin_id, u.name AS assigned_admin_name
+       FROM live_chat_conversations c
+       LEFT JOIN admin_users u ON u.id = c.assigned_admin_id
+       WHERE c.id = ?
+       LIMIT 1`,
+      [id]
+    )
     const conversation = conversationRows[0]
     if (!conversation) return NextResponse.json({ error: 'Percakapan tidak ditemukan.' }, { status: 404 })
     if (conversation.status === 'closed') return NextResponse.json({ error: 'Percakapan sudah ditutup.' }, { status: 409 })
+    if (conversation.assigned_admin_id && Number(conversation.assigned_admin_id) !== Number(admin.id)) {
+      return NextResponse.json({ error: `Chat sedang ditangani ${conversation.assigned_admin_name || 'admin lain'}. Ambil alih chat terlebih dahulu.` }, { status: 409 })
+    }
 
     if (!message && quickReplyId) {
       const replyRows = await queryRows<any>(
@@ -30,6 +40,30 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       message = cleanChatMessage(replyRows[0]?.message)
     }
     if (!message) return NextResponse.json({ error: 'Balasan tidak boleh kosong.' }, { status: 400 })
+
+    if (!conversation.assigned_admin_id) {
+      const claimResult = await execute(
+        `UPDATE live_chat_conversations
+         SET assigned_admin_id = ?, status = 'assigned', closed_at = NULL, updated_at = NOW()
+         WHERE id = ? AND assigned_admin_id IS NULL AND status <> 'closed'`,
+        [admin.id, id]
+      )
+
+      if (Number(claimResult.affectedRows || 0) === 0) {
+        const ownershipRows = await queryRows<any>(
+          `SELECT c.assigned_admin_id, u.name AS assigned_admin_name
+           FROM live_chat_conversations c
+           LEFT JOIN admin_users u ON u.id = c.assigned_admin_id
+           WHERE c.id = ?
+           LIMIT 1`,
+          [id]
+        )
+        const ownership = ownershipRows[0]
+        if (ownership?.assigned_admin_id && Number(ownership.assigned_admin_id) !== Number(admin.id)) {
+          return NextResponse.json({ error: `Chat baru saja diambil ${ownership.assigned_admin_name || 'admin lain'}. Ambil alih chat jika memang diperlukan.` }, { status: 409 })
+        }
+      }
+    }
 
     const result = await execute(
       `INSERT INTO live_chat_messages

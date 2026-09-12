@@ -64,3 +64,79 @@ export function isValidCustomerPhone(value: unknown) {
   const digits = normalizeCustomerPhone(value)
   return /^\d{9,18}$/.test(digits)
 }
+
+export function isNegotiationIntent(message: unknown) {
+  const text = ` ${normalizeKeywordText(message)} `
+  if (!text.trim()) return false
+
+  const phrases = [
+    ' taksiran ',
+    ' taksir ',
+    ' berapa dapat ',
+    ' dapat berapa ',
+    ' berapa cair ',
+    ' cair berapa ',
+    ' berapa pinjaman ',
+    ' nilai pinjaman ',
+    ' harga pinjaman ',
+    ' nominal pinjaman ',
+    ' estimasi pinjaman ',
+    ' estimasi harga ',
+    ' negosiasi ',
+    ' nego ',
+    ' harga gadai ',
+    ' nilai gadai ',
+    ' pinjam berapa ',
+    ' maksimal pinjaman ',
+    ' limit pinjaman ',
+    ' plafon pinjaman ',
+    ' nilai taksir ',
+    ' harga taksir ',
+  ]
+  return phrases.some((phrase) => text.includes(phrase))
+}
+
+
+export function isBranchIntent(message: unknown) {
+  const text = ` ${normalizeKeywordText(message)} `
+  if (!text.trim()) return false
+  const phrases = [
+    ' cabang ',
+    ' lokasi ',
+    ' outlet ',
+    ' alamat ',
+    ' terdekat ',
+    ' dekat sini ',
+    ' sekitar saya ',
+    ' di daerah ',
+    ' ada di ',
+    ' kantor gadai ',
+    ' cari cabang ',
+    ' cabang mana ',
+    ' cabang dimana ',
+    ' cabang di mana ',
+    ' deket sini ',
+    ' lokasi saya ',
+    ' daerah saya ',
+    ' petunjuk arah ',
+    ' maps ',
+    ' jam buka ',
+    ' jam operasional ',
+  ]
+  return phrases.some((phrase) => text.includes(phrase))
+}
+
+export function isCareerIntent(message: unknown) {
+  const text = ` ${normalizeKeywordText(message)} `
+  const keywords = [' lowongan ', ' loker ', ' karir ', ' career ', ' pekerjaan ', ' kerja ', ' hrd ', ' hr ', ' melamar ', ' lamaran ', ' rekrutmen ', ' recruitment ', ' vacancy ']
+  return keywords.some((keyword) => text.includes(keyword))
+}
+
+export function buildCustomerWhatsAppHref(phone: unknown, customerName?: unknown) {
+  const normalizedPhone = normalizeCustomerPhone(phone)
+  const name = String(customerName || '').trim()
+  const greeting = name
+    ? `Halo Kak ${name}, saya Admin HO Gadai Sakti. Menindaklanjuti pertanyaan Kakak terkait taksiran atau negosiasi barang di Live Chat Website Gadai Sakti.`
+    : 'Halo Kak, saya Admin HO Gadai Sakti. Menindaklanjuti pertanyaan Kakak terkait taksiran atau negosiasi barang di Live Chat Website Gadai Sakti.'
+  return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(greeting)}`
+}

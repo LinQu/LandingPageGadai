@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { execute, queryRows } from '@/lib/internal/db'
 import { cleanChatMessage, findLiveChatConversationByToken } from '@/lib/internal/live-chat'
-import { sortSuggestedQuickReplies } from '@/lib/live-chat-utils'
+import { isNegotiationIntent, sortSuggestedQuickReplies } from '@/lib/live-chat-utils'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+
+const NEGOTIATION_HANDOFF_MESSAGE = 'Untuk pertanyaan terkait taksiran harga, nominal pinjaman, atau negosiasi, Admin HO akan menindaklanjuti melalui WhatsApp.\n\nAdmin akan menghubungi terlebih dahulu ke nomor WhatsApp yang Kakak daftarkan pada Live Chat. Agar proses lebih cepat, siapkan informasi jenis barang, merek, tipe/seri, kondisi, kelengkapan, dan cabang/domisili Kakak. Tidak perlu mengirim pertanyaan yang sama berulang kali.'
 
 export async function GET(request: NextRequest) {
   const token = String(request.headers.get('x-live-chat-token') || '')
@@ -37,6 +39,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}))
   const token = String(body.token || '')
   const message = cleanChatMessage(body.message)
+  const requestedQuickReplyId = /^\d+$/.test(String(body.quickReplyId || '')) ? Number(body.quickReplyId) : null
 
   if (!message) return NextResponse.json({ error: 'Pesan tidak boleh kosong.' }, { status: 400 })
 
@@ -66,44 +69,56 @@ export async function POST(request: NextRequest) {
     const customerMessageId = Number(result.insertId)
     await execute(`UPDATE live_chat_conversations SET last_message_at = NOW() WHERE id = ?`, [conversation.id])
 
-    const replies = await queryRows<any>(
-      `SELECT id, title, category, message, keywords, priority, auto_send, active
-       FROM live_chat_quick_replies
-       WHERE active = 1 AND auto_send = 1
-       ORDER BY priority DESC, id ASC`
-    )
-    const suggestions = sortSuggestedQuickReplies(message, replies)
-    const autoReply = suggestions[0]
-    let botMessage: any = null
+    let autoReply: any = null
+    let handoffType: 'admin_whatsapp' | null = null
 
-    if (autoReply) {
-      const usedRows = await queryRows<{ total: number }>(
-        `SELECT COUNT(*) AS total
-         FROM live_chat_messages
-         WHERE conversation_id = ? AND sender_type = 'bot' AND quick_reply_id = ?`,
-        [conversation.id, autoReply.id]
-      )
-
-      if (Number(usedRows[0]?.total || 0) === 0) {
-        const botResult = await execute(
-          `INSERT INTO live_chat_messages
-           (conversation_id, sender_type, quick_reply_id, message, is_auto_reply)
-           VALUES (?, 'bot', ?, ?, 1)`,
-          [conversation.id, autoReply.id, autoReply.message]
-        )
-        botMessage = {
-          id: Number(botResult.insertId),
-          sender_type: 'bot',
-          message: autoReply.message,
-          is_auto_reply: 1,
-          created_at: new Date().toISOString(),
-        }
-        await execute(`UPDATE live_chat_conversations SET last_message_at = NOW() WHERE id = ?`, [conversation.id])
+    if (isNegotiationIntent(message)) {
+      handoffType = 'admin_whatsapp'
+      autoReply = {
+        id: null,
+        message: NEGOTIATION_HANDOFF_MESSAGE,
       }
+    } else if (requestedQuickReplyId) {
+      const exactReplies = await queryRows<any>(
+        `SELECT id, title, category, message, keywords, priority, auto_send, active, customer_visible
+         FROM live_chat_quick_replies
+         WHERE id = ? AND active = 1 AND auto_send = 1 AND customer_visible = 1
+         LIMIT 1`,
+        [requestedQuickReplyId]
+      )
+      autoReply = exactReplies[0] || null
+    } else {
+      const replies = await queryRows<any>(
+        `SELECT id, title, category, message, keywords, priority, auto_send, active, customer_visible
+         FROM live_chat_quick_replies
+         WHERE active = 1 AND auto_send = 1
+         ORDER BY priority DESC, id ASC`
+      )
+      autoReply = sortSuggestedQuickReplies(message, replies)[0] || null
+    }
+
+    let botMessage: any = null
+    if (autoReply) {
+      const botResult = await execute(
+        `INSERT INTO live_chat_messages
+         (conversation_id, sender_type, quick_reply_id, message, is_auto_reply)
+         VALUES (?, 'bot', ?, ?, 1)`,
+        [conversation.id, autoReply.id || null, autoReply.message]
+      )
+      botMessage = {
+        id: Number(botResult.insertId),
+        sender_type: 'bot',
+        message: autoReply.message,
+        is_auto_reply: 1,
+        created_at: new Date().toISOString(),
+      }
+      await execute(`UPDATE live_chat_conversations SET last_message_at = NOW() WHERE id = ?`, [conversation.id])
     }
 
     return NextResponse.json({
       ok: true,
+      handoffType,
+      autoReplied: Boolean(botMessage),
       messages: [
         {
           id: customerMessageId,

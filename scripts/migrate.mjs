@@ -71,6 +71,66 @@ async function runMigration() {
     }
   }
 
+  // Ensure Live Chat FAQ visibility field exists on databases created before FAQ v2
+  try {
+    const [faqCols] = await db.query(
+      `SELECT COLUMN_NAME
+       FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = ?
+         AND TABLE_NAME = 'live_chat_quick_replies'
+         AND COLUMN_NAME = 'customer_visible'`,
+      [database]
+    )
+    if (faqCols.length === 0) {
+      console.log('Adding customer_visible to live_chat_quick_replies...')
+      await db.query(
+        `ALTER TABLE live_chat_quick_replies
+         ADD COLUMN customer_visible TINYINT(1) NOT NULL DEFAULT 0 AFTER active`
+      )
+    }
+
+    const faqMigrationPath = path.join(process.cwd(), 'database', 'migrations', '006-live-chat-faq.sql')
+    if (fs.existsSync(faqMigrationPath)) {
+      console.log('Executing database/migrations/006-live-chat-faq.sql...')
+      await db.query(fs.readFileSync(faqMigrationPath, 'utf8'))
+    }
+  } catch (faqErr) {
+    console.warn('Live Chat FAQ setup warning:', faqErr.message)
+  }
+
+  // Ensure Live Chat V3 domicile/location fields and FAQ/keyword enhancements exist
+  try {
+    const [conversationCols] = await db.query(
+      `SELECT COLUMN_NAME
+       FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = ?
+         AND TABLE_NAME = 'live_chat_conversations'`,
+      [database]
+    )
+    const conversationColNames = new Set(conversationCols.map((row) => row.COLUMN_NAME))
+
+    if (!conversationColNames.has('customer_domicile')) {
+      console.log('Adding customer_domicile to live_chat_conversations...')
+      await db.query(`ALTER TABLE live_chat_conversations ADD COLUMN customer_domicile VARCHAR(255) NULL AFTER customer_phone`)
+    }
+    if (!conversationColNames.has('customer_latitude')) {
+      console.log('Adding customer_latitude to live_chat_conversations...')
+      await db.query(`ALTER TABLE live_chat_conversations ADD COLUMN customer_latitude DECIMAL(10,7) NULL AFTER customer_domicile`)
+    }
+    if (!conversationColNames.has('customer_longitude')) {
+      console.log('Adding customer_longitude to live_chat_conversations...')
+      await db.query(`ALTER TABLE live_chat_conversations ADD COLUMN customer_longitude DECIMAL(10,7) NULL AFTER customer_latitude`)
+    }
+
+    const enhancementMigrationPath = path.join(process.cwd(), 'database', 'migrations', '007-live-chat-enhancements.sql')
+    if (fs.existsSync(enhancementMigrationPath)) {
+      console.log('Executing database/migrations/007-live-chat-enhancements.sql...')
+      await db.query(fs.readFileSync(enhancementMigrationPath, 'utf8'))
+    }
+  } catch (liveChatV3Err) {
+    console.warn('Live Chat V3 setup warning:', liveChatV3Err.message)
+  }
+
   // Ensure default_price column exists on pawn_product_variants if table existed before
   try {
     const [cols] = await db.query(

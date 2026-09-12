@@ -29,6 +29,10 @@ if (missing.length) {
 
 const migrationPath = path.join(process.cwd(), 'database', 'migrations', '005-live-chat.sql')
 const sql = fs.readFileSync(migrationPath, 'utf8')
+const faqMigrationPath = path.join(process.cwd(), 'database', 'migrations', '006-live-chat-faq.sql')
+const faqSql = fs.existsSync(faqMigrationPath) ? fs.readFileSync(faqMigrationPath, 'utf8') : ''
+const enhancementMigrationPath = path.join(process.cwd(), 'database', 'migrations', '007-live-chat-enhancements.sql')
+const enhancementSql = fs.existsSync(enhancementMigrationPath) ? fs.readFileSync(enhancementMigrationPath, 'utf8') : ''
 const db = await mysql.createConnection({
   host: process.env.DB_HOST,
   port: Number(process.env.DB_PORT || 3306),
@@ -45,6 +49,59 @@ const liveChatTables = [
   'live_chat_messages',
   'live_chat_agent_presence',
 ]
+
+
+async function ensureLiveChatFaqColumns() {
+  const [rows] = await db.query(
+    `SELECT COLUMN_NAME
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = ?
+       AND TABLE_NAME = 'live_chat_quick_replies'
+       AND COLUMN_NAME = 'customer_visible'`,
+    [process.env.DB_NAME]
+  )
+
+  if (rows.length === 0) {
+    console.log('Adding customer_visible to live_chat_quick_replies...')
+    await db.query(
+      `ALTER TABLE live_chat_quick_replies
+       ADD COLUMN customer_visible TINYINT(1) NOT NULL DEFAULT 0 AFTER active`
+    )
+  }
+}
+
+async function ensureLiveChatEnhancementColumns() {
+  const [rows] = await db.query(
+    `SELECT COLUMN_NAME
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = ?
+       AND TABLE_NAME = 'live_chat_conversations'`,
+    [process.env.DB_NAME]
+  )
+  const columns = new Set(rows.map((row) => row.COLUMN_NAME))
+
+  if (!columns.has('customer_domicile')) {
+    console.log('Adding customer_domicile to live_chat_conversations...')
+    await db.query(
+      `ALTER TABLE live_chat_conversations
+       ADD COLUMN customer_domicile VARCHAR(255) NULL AFTER customer_phone`
+    )
+  }
+  if (!columns.has('customer_latitude')) {
+    console.log('Adding customer_latitude to live_chat_conversations...')
+    await db.query(
+      `ALTER TABLE live_chat_conversations
+       ADD COLUMN customer_latitude DECIMAL(10,7) NULL AFTER customer_domicile`
+    )
+  }
+  if (!columns.has('customer_longitude')) {
+    console.log('Adding customer_longitude to live_chat_conversations...')
+    await db.query(
+      `ALTER TABLE live_chat_conversations
+       ADD COLUMN customer_longitude DECIMAL(10,7) NULL AFTER customer_latitude`
+    )
+  }
+}
 
 async function ensureUtf8mb4() {
   for (const table of liveChatTables) {
@@ -69,9 +126,17 @@ async function ensureUtf8mb4() {
 
 try {
   await db.query(sql)
+  await ensureLiveChatFaqColumns()
+  await ensureLiveChatEnhancementColumns()
+  if (faqSql) await db.query(faqSql)
+  if (enhancementSql) {
+    console.log('Executing database/migrations/007-live-chat-enhancements.sql...')
+    await db.query(enhancementSql)
+  }
   await ensureUtf8mb4()
   console.log('Migrasi Live Chat Gadai Sakti selesai.')
   console.log('Charset Live Chat: utf8mb4')
+  console.log('FAQ, keyword, domisili/lokasi cabang, dan multi-admin Live Chat terverifikasi.')
   console.log('Tabel: live_chat_conversations, live_chat_messages, live_chat_quick_replies, live_chat_agent_presence')
 } finally {
   await db.end()

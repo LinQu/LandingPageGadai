@@ -7,7 +7,8 @@ export const dynamic = 'force-dynamic'
 
 async function getConversation(id: string) {
   const rows = await queryRows<any>(
-    `SELECT c.id, c.customer_name, c.customer_phone, c.status, c.assigned_admin_id,
+    `SELECT c.id, c.customer_name, c.customer_phone, c.customer_domicile,
+            c.customer_latitude, c.customer_longitude, c.status, c.assigned_admin_id,
             c.last_message_at, c.created_at, c.closed_at, c.source_page,
             u.name AS assigned_admin_name
      FROM live_chat_conversations c
@@ -59,7 +60,26 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   const action = String(body.action || '')
 
   try {
+    const currentConversation = await getConversation(id)
+    if (!currentConversation) return NextResponse.json({ error: 'Percakapan tidak ditemukan.' }, { status: 404 })
+
     if (action === 'assign') {
+      if (currentConversation.assigned_admin_id && Number(currentConversation.assigned_admin_id) !== Number(admin.id)) {
+        return NextResponse.json({ error: `Chat sedang ditangani ${currentConversation.assigned_admin_name || 'admin lain'}. Gunakan Ambil Alih jika memang diperlukan.` }, { status: 409 })
+      }
+      if (!currentConversation.assigned_admin_id) {
+        const claimResult = await execute(
+          `UPDATE live_chat_conversations
+           SET assigned_admin_id = ?, status = 'assigned', closed_at = NULL, updated_at = NOW()
+           WHERE id = ? AND assigned_admin_id IS NULL`,
+          [admin.id, id]
+        )
+        if (Number(claimResult.affectedRows || 0) === 0) {
+          const latestConversation = await getConversation(id)
+          return NextResponse.json({ error: `Chat baru saja diambil ${latestConversation?.assigned_admin_name || 'admin lain'}. Muat ulang atau gunakan Ambil Alih.` }, { status: 409 })
+        }
+      }
+    } else if (action === 'takeover') {
       await execute(
         `UPDATE live_chat_conversations
          SET assigned_admin_id = ?, status = 'assigned', closed_at = NULL, updated_at = NOW()
@@ -67,6 +87,9 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
         [admin.id, id]
       )
     } else if (action === 'close') {
+      if (currentConversation.assigned_admin_id && Number(currentConversation.assigned_admin_id) !== Number(admin.id)) {
+        return NextResponse.json({ error: `Chat masih ditangani ${currentConversation.assigned_admin_name || 'admin lain'}.` }, { status: 409 })
+      }
       await execute(
         `UPDATE live_chat_conversations
          SET status = 'closed', closed_at = NOW(), updated_at = NOW()
